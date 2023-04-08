@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-3">Welcome, {{ current_user.username }}!</h1>
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+    </div>
+    <p class="text-center">Select service:</p>
+
+    <div class="d-flex justify-content-center">
+        <a href="{{ url_for('upload_file') }}" class="btn btn-primary m-2">Data Upload</a>
+        <a href="{{ url_for('data_entry') }}" class="btn btn-primary m-2">Data Entry</a>
+        <a href="{{ url_for('validate_entry') }}" class="btn btn-primary m-2">Validate Entry</a>
+        <a href="{{ url_for('download') }}" class="btn btn-primary m-2">Download</a>
+    </div>
+{% endblock %}
+
