@@ -9,11 +9,11 @@ from sqlalchemy import text
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField, DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from forms import LoginForm, DataEntryForm
+from forms import LoginForm, DataEntryForm, ValidationEntryForm
 
 from io import StringIO
 from flask import Response
@@ -22,6 +22,7 @@ from flask import current_app
 from datetime import datetime
 import pandas as pd
 from werkzeug.utils import secure_filename
+from functools import wraps
 
 
 
@@ -73,10 +74,17 @@ class DataEntry(db.Model):
 
 
 #db.create_all()
-
-# @app.route('/')
-# def index():
-#     return render_template('index.html')
+# custom decorator for restricting access to resources based on user roles
+def requires_roles(*roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated or current_user.role not in roles:
+                flash('You do not have permission to access this page.')
+                return redirect(url_for('index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -144,17 +152,18 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-class User(UserMixin, db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(100), nullable=False)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(150), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='dataentrant')
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password = generate_password_hash(password)
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        return check_password_hash(self.password, password)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -165,11 +174,30 @@ def load_user(user_id):
 def home():
     return render_template("index.html")
 
-class RegistrationForm(FlaskForm):
+class RegistrationFormAdmin(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    role = SelectField('Role', choices=[('admin', 'Admin'), ('superuser', 'Superuser'), ('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant')], validators=[DataRequired()])
+    submit = SubmitField('Sign Up')
+
+    def validate_username(self, username):
+        user = User.query.filter_by(username=username.data).first()
+        if user:
+            raise ValidationError('That username is taken. Please choose a different one.')
+
+    def validate_email(self, email):
+        user = User.query.filter_by(email=email.data).first()
+        if user:
+            raise ValidationError('That email is taken. Please choose a different one.')
+        
+class RegistrationFormSuperuser(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    role = SelectField('Role', choices=[('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant')], validators=[DataRequired()])
     submit = SubmitField('Sign Up')
 
     def validate_username(self, username):
@@ -182,10 +210,10 @@ class RegistrationForm(FlaskForm):
         if user:
             raise ValidationError('That email is taken. Please choose a different one.')
 
-class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    submit = SubmitField('Login')
+# class LoginForm(FlaskForm):
+#     email = StringField('Email', validators=[DataRequired(), Email()])
+#     password = PasswordField('Password', validators=[DataRequired()])
+#     submit = SubmitField('Login')
 
 # @app.route('/register', methods=['GET', 'POST'])
 # def register():
@@ -203,12 +231,19 @@ class LoginForm(FlaskForm):
 
 
 @app.route('/register', methods=['GET', 'POST'])
+@requires_roles('admin', 'superuser')
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('landing'))
-    register_form = RegistrationForm()
+    if not current_user.is_authenticated or current_user.role not in ['admin', 'superuser']:
+        flash("You don't have permission to access this page.")
+        return redirect(url_for('index'))
+    # elif current_user.is_authenticated and current_user.role in ['admin', 'superuser']:
+    #     return redirect(url_for('landing'))
+    if current_user.role == 'admin':
+        register_form = RegistrationFormAdmin()
+    elif current_user.role == 'superuser':
+        register_form = RegistrationFormSuperuser()    
     if register_form.validate_on_submit():
-        user = User(username=register_form.username.data, email=register_form.email.data)
+        user = User(username=register_form.username.data, email=register_form.email.data, role=register_form.role.data)
         user.set_password(register_form.password.data)
         db.session.add(user)
         db.session.commit()
@@ -233,7 +268,13 @@ def login():
             flash('Login unsuccessful.  Please check your email and password.', 'danger')
     return render_template('login.html', title='Login', login_form=login_form)#, register_form=register_form)
 
+#from models import User
 
+@app.route('/users')
+@requires_roles('admin')
+def users():
+    all_users = User.query.all()
+    return render_template('users.html', users=all_users)
 # @app.route('/login', methods=['GET', 'POST'])
 # def login():
 #     if current_user.is_authenticated:
@@ -411,6 +452,17 @@ def upload_file():
             return redirect(url_for('landing'))
     return render_template('upload.html')
 
+# Create a new route for the validation page -to be completed
+@app.route('/validate', methods=['GET', 'POST'])
+@login_required
+def validate():
+    form = ValidationEntryForm()
+    if form.validate_on_submit():
+        # Perform validation or any other operation here
+        flash('Data validated successfully', 'success')
+        return redirect(url_for('validate'))
+    return render_template('ventry.html', title='Validate', form=form)
+
 @app.cli.command('drop-data-entry-table')
 def drop_data_entry_table():
     with app.app_context():
@@ -420,6 +472,35 @@ def drop_data_entry_table():
         print("Dropped table 'data_entry' successfully.")
 # flask drop-data-entry-table
 
+# @app.cli.command('drop-user-table')
+# def drop_user_table():
+#     with app.app_context():
+#         sql = text('DROP TABLE IF EXISTS "user" CASCADE;')
+#         result = db.session.execute(sql)
+#         db.session.commit()
+#         print("Dropped table 'user' successfully.")
+# # flask drop-user-table
+
+from flask.cli import AppGroup
+
+# Create a group of commands for user management
+user_cli = AppGroup('user')
+
+# Drop the user table if the current user is an admin
+@user_cli.command('drop_table')
+def drop_user_table():
+    # Check if the current user is an admin
+    #if current_user.is_authenticated and current_user.role == 'admin':
+        with current_app.app_context():
+            sql = text('DROP TABLE IF EXISTS "user" CASCADE;')
+            db.session.execute(sql)
+            db.session.commit()
+            print("User table dropped.")
+    #else:
+     #   print("Only admins can perform this action.")
+# Register the command group with the app
+app.cli.add_command(user_cli)
+#flask user drop_table
 
 #@app.route('/')
 @app.route('/index')

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, DateField, SubmitField, PasswordField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField, DateField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -47,3 +47,15 @@ class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+
+# Add a new form for data validation
+class ValidationEntryForm(FlaskForm):
+    client_id = StringField('Client ID', validators=[DataRequired()])
+    name = StringField('Name', validators=[DataRequired()])
+    sex = SelectField('Sex', choices=[('male', 'Male'), ('female', 'Female')], validators=[DataRequired()])
+    age = IntegerField('Age', validators=[DataRequired()])
+
+    # Add other fields as required for validation
+
+    submit = SubmitField('Validate')
