@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css">
+{% endblock %}
+
+{% block content %}
+    <h1>Update Client Record</h1>
+    <form method="POST" action="{{ url_for('update_client_record', client_id=client_id, facility_name=facility_name) }}">
+        {{ form.hidden_tag() }}
+        <table>
+            <!-- Other table rows here -->
+            <tr>
+                <th>Facility</th>
+                <td>{{ form.facility(class="selectpicker", data_live_search="true") }}</td>
+            </tr>
+            <tr>
+                <th>Client ID</th>
+                <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
+            </tr>
+            <!-- Other table rows here -->
+        </table>
+        <div class="form-group">
+            <label for="{{ form.dregimen_po.id }}">dregimen_po</label>
+            {{ form.dregimen_po(class="form-control") }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.mrefill_po.id }}">mrefill_po</label>
+            {{ form.mrefill_po(class="form-control") }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.laspud_po.id }}">laspud_po</label>
+            {{ form.laspud_po(class="form-control") }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.quantityd_po.id }}">quantityd_po</label>
+            {{ form.quantityd_po(class="form-control")}}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.client_folder.id }}">client_folder</label>
+            {{ form.client_folder(class="form-check") }}
+        </div>
+        <button type="submit" class="btn btn-primary">Update Client Record</button>
+    </form>
+    <div class="d-flex justify-content-end">
+        <a href="/data_entry" class="btn btn-secondary">Back to Data Entry</a>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
+{% endblock %}
+
+

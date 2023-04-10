@@ -22,7 +22,7 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser
+from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, ClientRecordUpdateForm,PharmacyRecordUpdateForm
 from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe
 from models import db, User, DataEntry, FacilityNameItem, ClientIdItem, UserIdItem
 from sqlalchemy import create_engine
@@ -86,16 +86,16 @@ def requires_roles(*roles):
 
 @app.route('/get_data_entry', methods=['GET'])
 def get_data_entry():
-    facility_id = request.args.get('facility_id')
+    facility_name = request.args.get('facility_name')
     client_id = request.args.get('client_id')
 
     # Fetch the DataEntry object based on the facility and client_id
-    data_entry = DataEntry.query.filter_by(facility_id=facility_id, client_id=client_id).first()
+    data_entry = DataEntry.query.filter_by(facility_id=facility_name, client_id=client_id).first()
 
     if data_entry is None:
         # Return an appropriate response when no data_entry is found
         return jsonify(
-            error="No matching data entry found."
+            error="No record found! Validation not posible at the moment. Check back when data has been entered!"
         )
 
     # Return the data_entry object as a JSON response
@@ -282,20 +282,10 @@ def download_csv():
 def landing():
     return render_template("landing.html")
 
-@app.route("/data_entry", methods=["GET", "POST"])
+@app.route("/data_entry")
 @login_required
 def data_entry():
-    form = DataEntryForm()
-    if form.validate_on_submit():
-        # Process and store the form data here
-        flash("Data entry submitted successfully.", "success")
-        return redirect(url_for("data_entry"))
-    return render_template("dataentry.html", form=form)
-
-# @app.route("/validate_entry")
-# @login_required
-# def validate_entry():
-#     return render_template("validate.html")
+    return render_template("dataentry.html")
 
 # Ensure the UPLOAD_FOLDER exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -394,8 +384,21 @@ def validate():
     form = ValidationEntryForm()
 
     if form.validate_on_submit():
-        # Your form processing code
-        pass
+        # Find the record to update
+        record = DataEntry.query.filter_by(facility=form.facility.data, client_id=form.client_id.data).first()
+        if record:
+            # Update the record
+            record.dregimen_po_correct = form.dregimen_po_correct.data
+            record.dregimen_pw_correct = form.dregimen_pw_correct.data
+            record.laspud_po_correct = form.laspud_po_correct.data
+            record.laspud_pw_correct = form.laspud_pw_correct.data
+            record.quantityd_po_correct = form.quantityd_po_correct.data
+            record.quantityd_pw_correct = form.quantityd_pw_correct.data
+
+            db.session.commit()
+            flash('Data entry has been validated and updated.', 'success')
+        else:
+            flash('No data entry found for the selected facility and client_id.', 'danger')
 
     # Call get_data_entry function and get the JSON response
     data_entry_response = get_data_entry()
@@ -411,6 +414,57 @@ def validate():
     
     return render_template('validate.html', form=form, data_entry=data_entry, error_message=error_message)
 
+@app.route('/update_client_record', methods=['GET', 'POST'])
+@login_required
+def update_client_record():
+    form = ClientRecordUpdateForm()
+
+    if form.validate_on_submit():
+        client_id_value = form.client_id.data.client_id
+        client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+
+        if not client_record:
+            flash('Client record not found.', 'danger')
+            return redirect(url_for('landing'))
+
+        client_record.dregimen_po = form.dregimen_po.data
+        client_record.mrefill_po = form.mrefill_po.data
+        client_record.laspud_po = form.laspud_po.data
+        client_record.quantityd_po = form.quantityd_po.data
+        client_record.client_folder = form.client_folder.data
+        client_record.userid = current_user.id
+
+        db.session.commit()
+        flash('Client record updated successfully.', 'success')
+        return redirect(url_for('landing'))
+
+    return render_template('update_client_record.html', form=form)
+
+@app.route('/update_pharm_record', methods=['GET', 'POST'])
+@login_required
+def update_pharm_record():
+    form = PharmacyRecordUpdateForm()
+
+    if form.validate_on_submit():
+        client_id_value = form.client_id.data.client_id
+        client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+
+        if not client_record:
+            flash('Client record not found.', 'danger')
+            return redirect(url_for('landing'))
+
+        client_record.dregimen_pw = form.dregimen_pw.data
+        client_record.mrefill_pw = form.mrefill_pw.data
+        client_record.laspud_pw = form.laspud_pw.data
+        client_record.quantityd_pw = form.quantityd_pw.data
+        client_record.pharm_doc = form.pharm_doc.data
+        client_record.userid = current_user.id
+
+        db.session.commit()
+        flash('Client record updated successfully.', 'success')
+        return redirect(url_for('landing'))
+
+    return render_template('update_pharm_record.html', form=form)
 
 
 @app.cli.command('drop-data-entry-table')

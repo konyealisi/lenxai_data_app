@@ -106,3 +106,41 @@ class ValidationEntryForm(FlaskForm):
     quantityd_pw_correct = RadioField('Is quantityd_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
 
     submit = SubmitField('Submit')
+
+def facility_name_choices():
+    return FacilityNameItem.query.order_by(FacilityNameItem.facility_name)
+
+def client_id_choices():
+    return ClientIdItem.query.order_by(ClientIdItem.client_id)
+
+class ClientRecordUpdateForm(FlaskForm):
+    facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
+    client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
+
+    dregimen_po = StringField('dregimen_po', validators=[DataRequired()])
+    mrefill_po = IntegerField('mrefill_po', validators=[DataRequired()])
+    laspud_po = DateField('laspud_po', format='%Y-%m-%d', validators=[DataRequired()])
+    quantityd_po = IntegerField('quantityd_po', validators=[DataRequired()])
+    client_folder = BooleanField('client_folder')
+    submit = SubmitField('Update Client Record')
+
+    def __init__(self, *args, **kwargs):
+        super(ClientRecordUpdateForm, self).__init__(*args, **kwargs)
+        self.facility.choices = [(facility.id, facility.facility_name) for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
+        self.client_id.choices = [(client_item.id, client_item.client_id) for client_item in ClientIdItem.query.order_by(ClientIdItem.client_id)]
+
+class PharmacyRecordUpdateForm(FlaskForm):
+    facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
+    client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
+
+    dregimen_pw = StringField('dregimen_pw', validators=[DataRequired()])
+    mrefill_pw = IntegerField('mrefill_pw', validators=[DataRequired()])
+    laspud_pw = DateField('laspud_pw', format='%Y-%m-%d', validators=[DataRequired()])
+    quantityd_pw = IntegerField('quantityd_pw', validators=[DataRequired()])
+    pharm_doc = BooleanField('pharm_doc')
+    submit = SubmitField('Update Pharmacy Record')
+
+    def __init__(self, *args, **kwargs):
+        super(PharmacyRecordUpdateForm, self).__init__(*args, **kwargs)
+        self.facility.choices = [(facility.id, facility.facility_name) for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
+        self.client_id.choices = [(client_item.id, client_item.client_id) for client_item in ClientIdItem.query.order_by(ClientIdItem.client_id)]

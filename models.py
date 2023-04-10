@@ -70,17 +70,17 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
-class FacilityNameItem:
-    def __init__(self, facility_name):
-        self.facility_name = facility_name
+# class FacilityNameItem:
+#     def __init__(self, facility_name):
+#         self.facility_name = facility_name
 
-class ClientIdItem:
-    def __init__(self, client_id):
-        self.client_id = client_id
+# class ClientIdItem:
+#     def __init__(self, client_id):
+#         self.client_id = client_id
 
-class UserIdItem:
-    def __init__(self, user_id):
-        self.user_id = user_id
+# class UserIdItem:
+#     def __init__(self, user_id):
+#         self.user_id = user_id
 
 class FacilityNameItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)

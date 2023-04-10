@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css">
+{% endblock %}
+
+{% block content %}
+    <h1>Update Pharmacy Record</h1>
+    <form method="POST" action="{{ url_for('update_pharm_record', client_id=client_id, facility_name=facility_name) }}">
+        {{ form.hidden_tag() }}
+        <table>
+            <!-- Other table rows here -->
+            <tr>
+                <th>Facility</th>
+                <td>{{ form.facility(class="selectpicker", data_live_search="true") }}</td>
+            </tr>
+            <tr>
+                <th>Client ID</th>
+                <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
+            </tr>
+            <!-- Other table rows here -->
+        </table>
+        <div class="form-group">
+            <label for="{{ form.dregimen_pw.id }}">dregimen_pw</label>
+            {{ form.dregimen_pw(class="form-control") }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.mrefill_pw.id }}">mrefill_pw</label>
+            {{ form.mrefill_pw(class="form-control") }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.laspud_pw.id }}">laspud_pw</label>
+            {{ form.laspud_pw(class="form-control") }}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.quantityd_pw.id }}">quantityd_pw</label>
+            {{ form.quantityd_pw(class="form-control")}}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.pharm_doc.id }}">pharm_doc</label>
+            {{ form.pharm_doc(class="form-check") }}
+        </div>
+        <button type="submit" class="btn btn-primary">Update Pharmacy Record</button>
+    </form>
+    <div class="d-flex justify-content-end">
+        <a href="/data_entry" class="btn btn-secondary">Back to Data Entry</a>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
+{% endblock %}
