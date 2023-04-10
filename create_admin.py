@@ -5,7 +5,7 @@ def create_admin_user():
     username = input("Enter username: ")
     email = input("Enter email: ")
     password = input("Enter password: ")
-    role = "admin"
+    role = "sysadmin"
 
     password_hash = generate_password_hash(password)
 
@@ -18,7 +18,7 @@ def create_admin_user():
     else:
         db.session.add(admin_user)
         db.session.commit()
-        print("Admin user created.")
+        print("System admin created.")
 
 if __name__ == "__main__":
     # Use the app context manager

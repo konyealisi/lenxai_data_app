@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 import csv
 import os
@@ -9,11 +9,9 @@ from sqlalchemy import text
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField, DateField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField, DateField, EmailField, FileField, FormField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-
-from forms import LoginForm, DataEntryForm, ValidationEntryForm
 
 from io import StringIO
 from flask import Response
@@ -24,57 +22,57 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-
+from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser
+from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe
+from models import db, User, DataEntry, FacilityNameItem, ClientIdItem, UserIdItem
+from sqlalchemy import create_engine
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = os.environ.get('FLASK_APP_SECRET_KEY', 'fallback_secret_key')
 
-db_user = os.environ.get('DB_USER_ndqadata') #'ndqadata'
-db_password = os.environ.get('DB_PASSWORD_ndqadata') #'*K5e1l0e7c4H5i95'
-db_host = os.environ.get('DB_HOST_ndqadata') # 'localhost'
-db_name = os.environ.get('DB_NAME_ndqadata') #'ndqadcollection'
-
-print(f' Database name: \t {db_name}')
+db_user = os.environ.get('DB_USER_ndqadata')
+db_password = os.environ.get('DB_PASSWORD_ndqadata')
+db_host = os.environ.get('DB_HOST_ndqadata')
+db_name = os.environ.get('DB_NAME_ndqadata')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}/{db_name}'
-db = SQLAlchemy(app)
 
-class DataEntry(db.Model):
-    userid = db.Column(db.Integer, nullable=True)
-    facility_name = db.Column(db.String(100), nullable=False)
-    facility_id = db.Column(db.String(100), nullable=True)
-    geolocation = db.Column(db.String(100), nullable=True)
-    client_id = db.Column(db.String(100), primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    sex = db.Column(db.String(100), nullable=False)
-    age = db.Column(db.Integer, nullable=False)
-    dregimen_ll = db.Column(db.String(100), nullable=True)
-    tx_age = db.Column(db.Integer, nullable=True)
-    dregimen_po = db.Column(db.String(100), nullable=True)
-    dregimen_pw = db.Column(db.String(100), nullable=True)
-    mrefill_ll = db.Column(db.Integer, nullable=True)
-    mrefill_po = db.Column(db.Integer, nullable=True)
-    mrefill_pw = db.Column(db.Integer, nullable=True)
-    laspud_ll = db.Column(db.Date, nullable=True)
-    laspud_po = db.Column(db.Date, nullable=True)
-    laspud_pw = db.Column(db.Date, nullable=True)
-    quantityd_po = db.Column(db.Integer, nullable=True)
-    quantityd_pw = db.Column(db.Integer, nullable=True)
+db.init_app(app)
 
+# Initialize the migration tool 
+# this is used to modify the database schema 
+# after it has been created
+migrate = Migrate(app, db)
 
-    # def __repr__(self):
-    #     return f'<DataEntry {self.first_name} {self.last_name}>'
+def populate_tables():
+    facility_names = db.session.query(DataEntry.facility_name).distinct()
+    client_ids = db.session.query(DataEntry.client_id).distinct()
+    user_ids = db.session.query(User.id).distinct()
 
-    def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+    for facility_name in facility_names:
+        facility_name_item = FacilityNameItem.query.filter_by(facility_name=facility_name[0]).first()
+        if not facility_name_item:
+            new_facility_name_item = FacilityNameItem(facility_name=facility_name[0])
+            db.session.add(new_facility_name_item)
+            db.session.commit()
 
-# # Initialize the migration tool
-# migrate = Migrate(app, db)
+    for client_id in client_ids:
+        client_id_item = ClientIdItem.query.filter_by(client_id=client_id[0]).first()
+        if not client_id_item:
+            new_client_id_item = ClientIdItem(client_id=client_id[0])
+            db.session.add(new_client_id_item)
+            db.session.commit()
 
+    for user_id in user_ids:
+        user_id_item = UserIdItem.query.filter_by(user_id=user_id[0]).first()
+        if not user_id_item:
+            new_user_id_item = UserIdItem(user_id=user_id[0])
+            db.session.add(new_user_id_item)
+            db.session.commit()
 
-#db.create_all()
-# custom decorator for restricting access to resources based on user roles
+# custom decorator for restricting access to app 
+# resources based on user roles and access level
 def requires_roles(*roles):
     def decorator(f):
         @wraps(f)
@@ -86,6 +84,32 @@ def requires_roles(*roles):
         return decorated_function
     return decorator
 
+@app.route('/get_data_entry', methods=['GET'])
+def get_data_entry():
+    facility_id = request.args.get('facility_id')
+    client_id = request.args.get('client_id')
+
+    # Fetch the DataEntry object based on the facility and client_id
+    data_entry = DataEntry.query.filter_by(facility_id=facility_id, client_id=client_id).first()
+
+    if data_entry is None:
+        # Return an appropriate response when no data_entry is found
+        return jsonify(
+            error="No matching data entry found."
+        )
+
+    # Return the data_entry object as a JSON response
+    return jsonify(
+        dregimen_po=data_entry.dregimen_po,
+        dregimen_pw=data_entry.dregimen_pw,
+        laspud_po=data_entry.laspud_po,
+        laspud_pw=data_entry.laspud_pw,
+        quantityd_po=data_entry.quantityd_po,
+        quantityd_pw=data_entry.quantityd_pw
+    )
+
+
+# 
 @app.route('/submit', methods=['POST'])
 def submit():
     if request.method == 'POST':
@@ -152,93 +176,24 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='dataentrant')
-
-    def set_password(self, password):
-        self.password = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password, password)
-
+# login manager
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
-    #return User.query.get(int(user_id))
 
+# Home route
 @app.route("/")
 def home():
     return render_template("index.html")
 
-class RegistrationFormAdmin(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('admin', 'Admin'), ('superuser', 'Superuser'), ('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant')], validators=[DataRequired()])
-    submit = SubmitField('Sign Up')
-
-    def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user:
-            raise ValidationError('That username is taken. Please choose a different one.')
-
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user:
-            raise ValidationError('That email is taken. Please choose a different one.')
-        
-class RegistrationFormSuperuser(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant')], validators=[DataRequired()])
-    submit = SubmitField('Sign Up')
-
-    def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user:
-            raise ValidationError('That username is taken. Please choose a different one.')
-
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user:
-            raise ValidationError('That email is taken. Please choose a different one.')
-
-# class LoginForm(FlaskForm):
-#     email = StringField('Email', validators=[DataRequired(), Email()])
-#     password = PasswordField('Password', validators=[DataRequired()])
-#     submit = SubmitField('Login')
-
-# @app.route('/register', methods=['GET', 'POST'])
-# def register():
-#     if current_user.is_authenticated:
-#         return redirect(url_for('index'))
-#     form = RegistrationForm()
-#     if form.validate_on_submit():
-#         user = User(username=form.username.data, email=form.email.data)
-#         user.set_password(form.password.data)
-#         db.session.add(user)
-#         db.session.commit()
-#         flash('Your account has been created! You can now log in.', 'success')
-#         return redirect(url_for('login'))
-#     return render_template('login.html', title='Register', form=form)
-
-
+# register route - for creating new user by authorized user - sysadmin, admin, and superuser
 @app.route('/register', methods=['GET', 'POST'])
-@requires_roles('admin', 'superuser')
+@requires_roles('sysadmin','admin', 'superuser')
 def register():
-    if not current_user.is_authenticated or current_user.role not in ['admin', 'superuser']:
+    if not current_user.is_authenticated or current_user.role not in ['sysadmin', 'admin', 'superuser']:
         flash("You don't have permission to access this page.")
         return redirect(url_for('index'))
-    # elif current_user.is_authenticated and current_user.role in ['admin', 'superuser']:
-    #     return redirect(url_for('landing'))
-    if current_user.role == 'admin':
+    if current_user.role in ['sysadmin', 'admin']:
         register_form = RegistrationFormAdmin()
     elif current_user.role == 'superuser':
         register_form = RegistrationFormSuperuser()    
@@ -252,6 +207,7 @@ def register():
         return redirect(next_page) if next_page else redirect(url_for('login'))
     return render_template('register.html', title='Register', register_form=register_form)
 
+# login route - for login in and gaining access to the platform
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -268,29 +224,14 @@ def login():
             flash('Login unsuccessful.  Please check your email and password.', 'danger')
     return render_template('login.html', title='Login', login_form=login_form)#, register_form=register_form)
 
-#from models import User
-
+# User route - lets the sysadmin and admin user view all registered users on the platform
 @app.route('/users')
-@requires_roles('admin')
+@requires_roles('sysadmin', 'admin')
 def users():
     all_users = User.query.all()
     return render_template('users.html', users=all_users)
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     if current_user.is_authenticated:
-#         return redirect(url_for('index'))
-#     form = LoginForm()
-#     if form.validate_on_submit():
-#         user = User.query.filter_by(email=form.email.data).first()
-#         if user and user.check_password(form.password.data):
-#             login_user(user)
-#             flash('You have successfully logged in.', 'success')
-#             next_page = request.args.get('next')
-#             return redirect(next_page) if next_page else redirect(url_for('index'))
-#         else:
-#             flash('Login unsuccessful.  Please check your email and password.', 'danger')
-#     return render_template('login.html', title='Login', form=form)
 
+# logou route - for login out of the platform
 @app.route('/logout')
 @login_required
 def logout():
@@ -301,14 +242,16 @@ def logout():
     return redirect(url_for("home"))
 
  
-# Route to render the download page
+# Route to render the download page - this redirects to the download_csv route
 @app.route("/download")
-@login_required
+@requires_roles('sysadmin', 'admin', 'superuser')
 def download():
     return render_template("download.html")
 
-
+# Download_csv route - let authorized user (sysadmin, admin, superuser) download 
+# data entered and stored by the platform
 @app.route('/download_csv', methods=['GET'])
+@requires_roles('sysadmin', 'admin', 'superuser')
 def download_csv():
     # Query data from the database
     data = DataEntry.query.all()
@@ -318,7 +261,7 @@ def download_csv():
 
     # Create a CSV file in memory
     csv_file = StringIO()
-    fieldnames = ['userid','facility_name','facility_id','geolocation','client_id','name','age','sex','dregimen_ll','tx_age','dregimen_po','dregimen_pw','mrefill_ll','mrefill_po','mrefill_pw','laspud_ll','laspud_po','laspud_pw','quantityd_po','quantityd_pw']  # Replace with your actual column names
+    fieldnames = ['userid','facility_name','facility_id','geolocation','client_id','name','age','sex','dregimen_ll','tx_age','dregimen_po','dregimen_pw','mrefill_ll','mrefill_po','mrefill_pw','laspud_ll','laspud_po','laspud_pw','quantityd_po','quantityd_pw','client_folder', 'laspud_pw_correct', 'dregimen_po_correct', 'quantityd_pw_correct', 'dregimen_pw_correct', 'pharm_doc', 'laspud_po_correct', 'quantityd_po_correct']  # Replace with your actual column names
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
     writer.writeheader()
     for row in data_list:
@@ -333,6 +276,7 @@ def download_csv():
 
     return response
 
+# The main landing page
 @app.route("/landing")
 @login_required
 def landing():
@@ -348,37 +292,18 @@ def data_entry():
         return redirect(url_for("data_entry"))
     return render_template("dataentry.html", form=form)
 
-@app.route("/validate_entry")
-@login_required
-def validate_entry():
-    return render_template("validate.html")
+# @app.route("/validate_entry")
+# @login_required
+# def validate_entry():
+#     return render_template("validate.html")
 
 # Ensure the UPLOAD_FOLDER exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 
-# Allowed file extensions
-ALLOWED_EXTENSIONS = {'csv', 'xls', 'xlsx', 'xml', 'json'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def clean_dataframe(df):
-    # Trim column names, convert to lowercase, and replace spaces with underscores
-    df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
-    
-    # Trim all string values in the DataFrame
-    df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-    
-    return df
-
-def calculate_age(ndate, benchmark_date):
-    n = benchmark_date.year - ndate.year - ((benchmark_date.month, benchmark_date.day) < (ndate.month, ndate.day))
-    return n
-
 @app.route('/upload', methods=['GET', 'POST'])
-@login_required
+@requires_roles('sysadmin','admin')
 def upload_file():
     if request.method == 'POST':
         # check if the post request has the file part
@@ -416,7 +341,7 @@ def upload_file():
             df['last_pickup_date'] = pd.to_datetime(df['last_pickup_date'], dayfirst=True)
             
             df['age'] = df.apply(lambda row: calculate_age(row['date_of_birth'], row['last_pickup_date']), axis=1)
-            df['tx_age'] = df.apply(lambda row: calculate_age(row['art_start_date'], row['last_pickup_date']), axis=1)
+            df['tx_age'] = df.apply(lambda row: calculate_age_in_months(row['art_start_date'], row['last_pickup_date']), axis=1)
 
 
             # Process the data and save it to the database
@@ -452,18 +377,44 @@ def upload_file():
             return redirect(url_for('landing'))
     return render_template('upload.html')
 
-# Create a new route for the validation page -to be completed
+# # Create a new route for the validation page -to be completed
+# @app.route('/validate', methods=['GET', 'POST'])
+# @login_required
+# def validate():
+#     form = ValidationEntryForm()
+#     if form.validate_on_submit():
+#         # Perform validation or any other operation here
+#         flash('Data validated successfully', 'success')
+#         return redirect(url_for('validate'))
+#     return render_template('ventry.html', title='Validate', form=form)
+
 @app.route('/validate', methods=['GET', 'POST'])
-@login_required
+@requires_roles('sysadmin','admin', 'superuser', 'datavalidator')
 def validate():
     form = ValidationEntryForm()
+
     if form.validate_on_submit():
-        # Perform validation or any other operation here
-        flash('Data validated successfully', 'success')
-        return redirect(url_for('validate'))
-    return render_template('ventry.html', title='Validate', form=form)
+        # Your form processing code
+        pass
+
+    # Call get_data_entry function and get the JSON response
+    data_entry_response = get_data_entry()
+
+    # Check if the response is a dictionary or a JSON object
+    if isinstance(data_entry_response, dict):
+        data_entry = data_entry_response
+    else:
+        data_entry = data_entry_response.json
+
+    # Check for an error in the response
+    error_message = data_entry.get('error', None)
+    
+    return render_template('validate.html', form=form, data_entry=data_entry, error_message=error_message)
+
+
 
 @app.cli.command('drop-data-entry-table')
+#@requires_roles('sysadmin')
 def drop_data_entry_table():
     with app.app_context():
         sql = text('DROP TABLE IF EXISTS data_entry;')
@@ -471,6 +422,17 @@ def drop_data_entry_table():
         db.session.commit()
         print("Dropped table 'data_entry' successfully.")
 # flask drop-data-entry-table
+
+@app.cli.command('drop-facility_name_item-table')
+#@requires_roles('sysadmin')
+def drop_data_entry_table():
+    with app.app_context():
+        sql = text('DROP TABLE IF EXISTS facility_name_item;')
+        result = db.session.execute(sql)
+        db.session.commit()
+        print("Dropped table 'facility_name_item' successfully.")
+# flask drop-facility_name_item-table
+
 
 # @app.cli.command('drop-user-table')
 # def drop_user_table():
@@ -488,6 +450,7 @@ user_cli = AppGroup('user')
 
 # Drop the user table if the current user is an admin
 @user_cli.command('drop_table')
+#@requires_roles('sysadmin')
 def drop_user_table():
     # Check if the current user is an admin
     #if current_user.is_authenticated and current_user.role == 'admin':
@@ -502,6 +465,10 @@ def drop_user_table():
 app.cli.add_command(user_cli)
 #flask user drop_table
 
+@app.context_processor
+def inject_current_year():
+    return {'current_year': datetime.utcnow().year}
+
 #@app.route('/')
 @app.route('/index')
 @login_required
@@ -512,4 +479,6 @@ def index():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        # Call the function to populate the tables
+        populate_tables()
     app.run(debug=True)

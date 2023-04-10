@@ -1,9 +1,11 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField, DateField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField, DateField, RadioField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-
-#from app import User
+#from wtforms.ext.sqlalchemy.fields import QuerySelectField
+from utils import validate_email, validate_username, facility_choices, client_choices
+from wtforms_sqlalchemy.fields import QuerySelectField
+from models import DataEntry, User, FacilityNameItem, ClientIdItem, UserIdItem, db
 
 class DataEntryForm(FlaskForm):
     facility_name = StringField('Facility Name', validators=[DataRequired(), Length(max=100)])
@@ -26,36 +28,81 @@ class DataEntryForm(FlaskForm):
     quantityd_pw = IntegerField('QuantityD PW')
     submit = SubmitField('Submit')
 
-# class RegistrationForm(FlaskForm):
-#     username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
-#     email = StringField('Email', validators=[DataRequired(), Email()])
-#     password = PasswordField('Password', validators=[DataRequired()])
-#     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-#     submit = SubmitField('Sign Up')
+# Registration form - Admin: this is the form for registering new users by the sysadmin and an admin user 
+# with this access can be created for users with access level: admin, superuser, datavalidator, and dataentrant
+# Note sysadmin is created during system set up
+class RegistrationFormAdmin(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20), validate_username])
+    email = StringField('Email', validators=[DataRequired(), Email(), validate_email])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    role = SelectField('Role', choices=[('admin', 'Admin'), ('superuser', 'Superuser'), ('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant')], validators=[DataRequired()])
+    submit = SubmitField('Sign Up')
 
-#     def validate_username(self, username):
-#         user = User.query.filter_by(username=username.data).first()
-#         if user:
-#             raise ValidationError('That username is taken. Please choose a different one.')
+# Registration form - Superuser: this is the form for registering new users by a superuser
+# with this access can be created for users with access level: admin, datavalidator, and dataentrant    
+class RegistrationFormSuperuser(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20), validate_username])
+    email = StringField('Email', validators=[DataRequired(), Email(), validate_email])
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    role = SelectField('Role', choices=[('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant')], validators=[DataRequired()])
+    submit = SubmitField('Sign Up')
 
-#     def validate_email(self, email):
-#         user = User.query.filter_by(email=email.data).first()
-#         if user:
-#             raise ValidationError('That email is taken. Please choose a different one.')
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
+# class CustomEntryForm(FlaskForm):
+#     facility_name = QuerySelectField(
+#         'Facility Name',
+#         query_factory=lambda: [FacilityNameItem(facility_name) for facility_name in db.session.query(DataEntry.facility_name).distinct()],
+#         get_label='facility_name',
+#         allow_blank=True,
+#         blank_text='(Select a facility name)',
+#     )
+#     client_id = QuerySelectField(
+#         'Client ID',
+#         query_factory=lambda: [ClientIdItem(client_id) for client_id in db.session.query(DataEntry.client_id).distinct()],
+#         get_label='client_id',
+#         allow_blank=True,
+#         blank_text='(Select a client ID)',
+#     )
+#     user_id = QuerySelectField(
+#         'User ID',
+#         query_factory=lambda: [UserIdItem(user_id) for user_id in db.session.query(User.id).distinct()],
+#         get_label='user_id',
+#         allow_blank=True,
+#         blank_text='(Select a user ID)',
+#     )
+
 
 # Add a new form for data validation
+def facility_name_choices():
+    return FacilityNameItem.query
+
+def client_id_choices():
+    return ClientIdItem.query
+
 class ValidationEntryForm(FlaskForm):
-    client_id = StringField('Client ID', validators=[DataRequired()])
-    name = StringField('Name', validators=[DataRequired()])
-    sex = SelectField('Sex', choices=[('male', 'Male'), ('female', 'Female')], validators=[DataRequired()])
-    age = IntegerField('Age', validators=[DataRequired()])
+    facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
+    client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
+    data_element = StringField('Data Element', validators=[DataRequired()])
 
-    # Add other fields as required for validation
+    dregimen_po = StringField('dregimen_po')
+    dregimen_pw = StringField('dregimen_pw')
+    laspud_po = StringField('laspud_po')
+    laspud_pw = StringField('laspud_pw')
+    quantityd_po = StringField('quantityd_po')
+    quantityd_pw = StringField('quantityd_pw')
 
-    submit = SubmitField('Validate')
+    dregimen_po_correct = RadioField('Is dregimen_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+    dregimen_pw_correct = RadioField('Is dregimen_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+    laspud_po_correct = RadioField('Is laspud_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+    laspud_pw_correct = RadioField('Is laspud_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+    quantityd_po_correct = RadioField('Is quantityd_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+    quantityd_pw_correct = RadioField('Is quantityd_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+
+    submit = SubmitField('Submit')

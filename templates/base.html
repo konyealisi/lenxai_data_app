@@ -1,21 +1,84 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}LenxAI - Nigeria DQA Data Collection App{% endblock %}</title>
-</head>
-<body>
-    {% with messages = get_flashed_messages(with_categories=true) %}
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>LenxAI - Nigeria DQA App</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+Knujsl5/+/+eBp+//1TI0zXz7tDm2Dff/cC7g9wY9XCWg" crossorigin="anonymous">
+
+
+    <!-- Select2 CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
+
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  </head>
+  <body>
+    <header>
+        <!-- Navigation bar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+          <div class="container">
+            <a class="navbar-brand" href="{{ url_for('landing') }}">Nigeria DQA App</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('download') }}">Downlod data</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </header>    
+
+    <main>
+      {% with messages = get_flashed_messages() %}
         {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
+          <ul class="flashes">
+            {% for message in messages %}
+              <li>{{ message }}</li>
             {% endfor %}
+          </ul>
         {% endif %}
-    {% endwith %}
-    {% block content %}
-    {% endblock %}
-</body>
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+<!-- Footer content goes here -->
+    <footer class="bg-light py-3 mt-auto">
+        <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+            <p class="mb-0">&copy; LenxAI {{ current_year }}</p>
+            </div>
+        </div>
+        </div>
+    </footer>
+  
+
+    <!-- Bootstrap and necessary JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U7LMu7l4U+t4l+WyJXBKjYpivy7e8JvZkt/qF9JojTpu2Qz7lFf+hGcJed1z6j"/ crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/js/select2.min.js"></script>
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+
+    <!-- Initialize Select2 -->
+    <script>
+        $(document).ready(function() {
+            $('select').select2();
+        });
+    </script>
+  </body>
 </html>
