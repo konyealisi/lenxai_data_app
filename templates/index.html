@@ -1,9 +1,19 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1 class="text-center">Welcome to Data Quality Assessment Tool</h1>
-    <div class="text-center mt-4">
-        <!-- <a href="{{ url_for('register') }}" class="btn btn-primary">Register</a> -->
-        <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+<h1 class="text-center">Welcome to Data Quality Assessment Tool</h1>
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="height:100vh">
+        <div class="col-md-3">
+            <div class="card" style="width: 90%; min-height: 100px;">
+                <div class="card-body">
+                    <!-- content here -->
+                    <div class="d-flex justify-content-center">
+                    <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 {% endblock %}

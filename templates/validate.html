@@ -42,7 +42,7 @@
     <h1>Data Validation</h1>
 
     {% if error_message %}
-        <p>Error: {{ error_message }}</p>
+        <p>{{ error_message }}</p>
     {% else %}
         <form method="POST" action="{{ url_for('validate') }}">
             {{ form.hidden_tag() }}

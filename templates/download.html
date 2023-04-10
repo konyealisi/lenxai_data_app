@@ -1,14 +1,22 @@
 <!-- templates/download.html -->
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Download CSV</title>
-</head>
-<body>
-    <h1>Download Data as CSV</h1>
-    <a href="/download_csv">Download CSV</a>
-    <a href="/landing">Back to Main</a>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css">
+{% endblock %}
+
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center">
+        <h1 class="mb-3">Welcome, {{ current_user.username }}!</h1>
+    </div>
+    <div class="d-flex justify-content-center">
+        <h1 class="mb-3">Download Data as CSV!</h1>
+    </div>
+    <div class="d-flex justify-content-center">
+        <a href="/download_csv" class="btn btn-primary mb-3">Download CSV</a>
+    </div>
+    <div class="d-flex justify-content-end">
+        <a href="/landing" class="btn btn-secondary">Back to Main</a>
+    </div>
+{% endblock %}
