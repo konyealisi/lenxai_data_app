@@ -5,14 +5,16 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Update Client Record</h1>
+    <div class="d-flex justify-content-center">
+        <h1 class="mb-3">Update Client Record</h1>
+    </div>
     <form method="POST" action="{{ url_for('update_client_record', client_id=client_id, facility_name=facility_name) }}">
         {{ form.hidden_tag() }}
         <table>
             <!-- Other table rows here -->
             <tr>
                 <th>Facility</th>
-                <td>{{ form.facility(class="selectpicker", data_live_search="true") }}</td>
+                <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
             </tr>
             <tr>
                 <th>Client ID</th>
@@ -20,6 +22,8 @@
             </tr>
             <!-- Other table rows here -->
         </table>
+        <div class="spacing-div"></div>
+        <div class="spacing-div"></div>
         <div class="form-group">
             <label for="{{ form.dregimen_po.id }}">dregimen_po</label>
             {{ form.dregimen_po(class="form-control") }}
@@ -38,7 +42,7 @@
         </div>
         <div class="form-group">
             <label for="{{ form.client_folder.id }}">client_folder</label>
-            {{ form.client_folder(class="form-check") }}
+            {{ form.client_folder() }}
         </div>
         <button type="submit" class="btn btn-primary">Update Client Record</button>
     </form>
@@ -50,6 +54,7 @@
 {% block scripts %}
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
+  <script src="{{ url_for('static', filename='client_id.js') }}"></script>
 {% endblock %}
 
 

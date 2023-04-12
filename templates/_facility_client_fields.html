@@ -1,0 +1,10 @@
+{% with form=facility_client_form %}
+    <div class="form-group">
+        {{ form.facility.label }}
+        {{ form.facility(class="form-control") }}
+    </div>
+    <div class="form-group">
+        {{ form.client_id.label }}
+        {{ form.client_id(class="form-control") }}
+    </div>
+{% endwith %}

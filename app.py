@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, Request
 
 import csv
 import os
@@ -22,7 +22,7 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, ClientRecordUpdateForm,PharmacyRecordUpdateForm
+from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, ClientRecordUpdateForm,PharmacyRecordUpdateForm, ValidateRecordForm, FacilityClientForm, FacilityForm
 from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe
 from models import db, User, DataEntry, FacilityNameItem, ClientIdItem, UserIdItem
 from sqlalchemy import create_engine
@@ -291,6 +291,9 @@ def data_entry():
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
+def entry_exists(client_id, facility_name):
+    existing_entry = DataEntry.query.filter_by(client_id=client_id, facility_name=facility_name).first()
+    return existing_entry is not None
 
 @app.route('/upload', methods=['GET', 'POST'])
 @requires_roles('sysadmin','admin')
@@ -358,113 +361,254 @@ def upload_file():
                         entry_data[data_entry_col] = row[file_col]
                     else:
                         entry_data[data_entry_col] = None  # Assign a default value (e.g., None) if the file_col is missing
-
-                new_entry = DataEntry(**entry_data)
-                db.session.add(new_entry)
-                db.session.commit()
+                if not entry_exists(entry_data['client_id'], entry_data['facility_name']):
+                    new_entry = DataEntry(**entry_data)
+                    db.session.add(new_entry)
+                    db.session.commit()
 
             flash('Data uploaded successfully!', 'success')
             return redirect(url_for('landing'))
     return render_template('upload.html')
 
-# # Create a new route for the validation page -to be completed
-# @app.route('/validate', methods=['GET', 'POST'])
-# @login_required
-# def validate():
-#     form = ValidationEntryForm()
-#     if form.validate_on_submit():
-#         # Perform validation or any other operation here
-#         flash('Data validated successfully', 'success')
-#         return redirect(url_for('validate'))
-#     return render_template('ventry.html', title='Validate', form=form)
-
-@app.route('/validate', methods=['GET', 'POST'])
-@requires_roles('sysadmin','admin', 'superuser', 'datavalidator')
-def validate():
-    form = ValidationEntryForm()
+@app.route('/validate_client_record', methods=['GET', 'POST'])
+@app.route('/validate_client_record/<int:client_id>/<string:facility_name>', methods=['GET', 'POST'])
+@login_required
+def validate_client_record(client_id=None, facility_name=None):
+    form = ValidateRecordForm()
 
     if form.validate_on_submit():
-        # Find the record to update
-        record = DataEntry.query.filter_by(facility=form.facility.data, client_id=form.client_id.data).first()
-        if record:
-            # Update the record
-            record.dregimen_po_correct = form.dregimen_po_correct.data
-            record.dregimen_pw_correct = form.dregimen_pw_correct.data
-            record.laspud_po_correct = form.laspud_po_correct.data
-            record.laspud_pw_correct = form.laspud_pw_correct.data
-            record.quantityd_po_correct = form.quantityd_po_correct.data
-            record.quantityd_pw_correct = form.quantityd_pw_correct.data
+        client_id_value = form.client_id.data.client_id
+        client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
 
-            db.session.commit()
-            flash('Data entry has been validated and updated.', 'success')
-        else:
-            flash('No data entry found for the selected facility and client_id.', 'danger')
+        if not client_record:
+            flash('Client record not found.', 'danger')
+            return redirect(url_for('landing'))
 
-    # Call get_data_entry function and get the JSON response
-    data_entry_response = get_data_entry()
+        client_record.dregimen_po_correct = form.dregimen_po_correct.data
+        client_record.dregimen_pw_correct = form.dregimen_pw_correct.data
+        client_record.laspud_po_correct = form.laspud_po_correct.data
+        client_record.laspud_pw_correct = form.laspud_pw_correct.data
+        client_record.quantityd_po_correct = form.quantityd_po_correct.data
+        client_record.quantityd_pw_correct = form.quantityd_pw_correct.data
 
-    # Check if the response is a dictionary or a JSON object
-    if isinstance(data_entry_response, dict):
-        data_entry = data_entry_response
+        db.session.commit()
+        flash('Client record validated successfully.', 'success')
+        return redirect(url_for('landing'))
+    ##new start
+    if client_id and facility_name:
+        client_record = DataEntry.query.filter_by(client_id=client_id, facility_name=facility_name).first()
     else:
-        data_entry = data_entry_response.json
+        client_record = None
 
-    # Check for an error in the response
-    error_message = data_entry.get('error', None)
-    
-    return render_template('validate.html', form=form, data_entry=data_entry, error_message=error_message)
+    return render_template('validate_client_record.html', form=form, client_record=client_record) # new end
+
+    #return render_template('validate_client_record.html', form=form)
+
+@app.route('/fetch_client_record', methods=['GET'])
+@login_required
+def fetch_client_record():
+    print("Fetching client record")
+    client_id = request.args.get('client_id')
+    facility_name = request.args.get('facility_name')
+
+    if client_id and facility_name:
+        client_record = DataEntry.query.filter_by(client_id=client_id, facility_name=facility_name).first()
+        if client_record:
+            return jsonify({
+                'dregimen_po': client_record.dregimen_po,
+                'dregimen_pw': client_record.dregimen_pw,
+                'laspud_po': client_record.laspud_po,
+                'laspud_pw': client_record.laspud_pw,
+                'quantityd_po': client_record.quantityd_po,
+                'quantityd_pw': client_record.quantityd_pw,
+            })
+        print("Client record found:", client_record)
+
+    return jsonify(None)
+
+# @app.route('/get_client_ids')
+# def get_client_ids():
+#     facility_name = request.args.get('facility_name')
+#     client_items = DataEntry.query.filter_by(facility_name=facility_name).order_by(DataEntry.client_id).all()
+#     client_ids = [{'id': item.id, 'client_id': item.client_id} for item in client_items]
+#     return jsonify(client_ids)
+
+# @app.route('/get_client_ids', methods=['GET'])
+# def get_client_ids():
+#     facility_name = request.args.get('facility_name')
+#     clients = DataEntry.query.filter_by(facility_name=facility_name).all()
+#     client_ids = [{'id': client.id, 'client_id': client.client_id} for client in clients]
+#     return jsonify(client_ids)
+
+
+# @app.route('/update_client_record', methods=['GET', 'POST'])
+# @login_required
+# def update_client_record():
+#     form = ClientRecordUpdateForm()
+
+#     if form.validate_on_submit():
+#         client_id_value = form.client_id.data.client_id
+#         client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+
+#         if not client_record:
+#             flash('Client record not found.', 'danger')
+#             return redirect(url_for('landing'))
+
+#         client_record.dregimen_po = form.dregimen_po.data
+#         client_record.mrefill_po = form.mrefill_po.data
+#         client_record.laspud_po = form.laspud_po.data
+#         client_record.quantityd_po = form.quantityd_po.data
+#         client_record.client_folder = form.client_folder.data
+#         client_record.userid = current_user.id
+
+#         db.session.commit()
+#         flash('Client record updated successfully.', 'success')
+#         return redirect(url_for('landing'))
+
+#     return render_template('update_client_record.html', form=form)
 
 @app.route('/update_client_record', methods=['GET', 'POST'])
 @login_required
 def update_client_record():
     form = ClientRecordUpdateForm()
 
-    if form.validate_on_submit():
-        client_id_value = form.client_id.data.client_id
-        client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+    facility_client_form = FacilityClientForm()
+    facility_client_form.facility.choices = [(f.id, f.facility_name) for f in FacilityNameItem.query.order_by('facility_name')]
 
-        if not client_record:
-            flash('Client record not found.', 'danger')
+    if request.method == 'POST' and facility_client_form.validate():
+        selected_facility = FacilityNameItem.query.get(facility_client_form.facility.data)
+        facility_client_form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
+        #facility_client_form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
+
+        if form.validate_on_submit():
+            client_id_value = form.client_id.data.client_id
+            client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+
+            if not client_record:
+                flash('Client record not found.', 'danger')
+                return redirect(url_for('landing'))
+
+            client_record.dregimen_po = form.dregimen_po.data
+            client_record.mrefill_po = form.mrefill_po.data
+            client_record.laspud_po = form.laspud_po.data
+            client_record.quantityd_po = form.quantityd_po.data
+            client_record.client_folder = form.client_folder.data
+            client_record.userid = current_user.id
+
+            db.session.commit()
+            flash('Client record updated successfully.', 'success')
             return redirect(url_for('landing'))
 
-        client_record.dregimen_po = form.dregimen_po.data
-        client_record.mrefill_po = form.mrefill_po.data
-        client_record.laspud_po = form.laspud_po.data
-        client_record.quantityd_po = form.quantityd_po.data
-        client_record.client_folder = form.client_folder.data
-        client_record.userid = current_user.id
+    return render_template('update_client_record.html', form=form, facility_client_form=facility_client_form)
 
-        db.session.commit()
-        flash('Client record updated successfully.', 'success')
-        return redirect(url_for('landing'))
+@app.route('/facility_client', methods=['GET', 'POST'])
+def facility_client():
+    form = FacilityClientForm()
+    form.facility.choices = [(f.id, f.facility_name) for f in FacilityNameItem.query.order_by('facility_name')]
+    
+    if form.validate_on_submit():
+        selected_facility = FacilityNameItem.query.get(form.facility.data)
+        form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
+    else:
+        form.client_id.choices = []
 
-    return render_template('update_client_record.html', form=form)
+    return render_template('facility_client.html', form=form)
 
 @app.route('/update_pharm_record', methods=['GET', 'POST'])
 @login_required
 def update_pharm_record():
     form = PharmacyRecordUpdateForm()
 
-    if form.validate_on_submit():
-        client_id_value = form.client_id.data.client_id
-        client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+    if request.method == 'POST':
+        form.update_client_id_choices(form.facility.data)
 
-        if not client_record:
-            flash('Client record not found.', 'danger')
+        if form.validate_on_submit():
+            client_id_value = form.client_id.data.client_id
+            client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+
+            if not client_record:
+                flash('Client record not found.', 'danger')
+                return redirect(url_for('landing'))
+
+            client_record.dregimen_pw = form.dregimen_pw.data
+            client_record.mrefill_pw = form.mrefill_pw.data
+            client_record.laspud_pw = form.laspud_pw.data
+            client_record.quantityd_pw = form.quantityd_pw.data
+            client_record.pharm_doc = form.pharm_doc.data
+            client_record.userid = current_user.id
+
+            db.session.commit()
+            flash('Client record updated successfully.', 'success')
             return redirect(url_for('landing'))
 
-        client_record.dregimen_pw = form.dregimen_pw.data
-        client_record.mrefill_pw = form.mrefill_pw.data
-        client_record.laspud_pw = form.laspud_pw.data
-        client_record.quantityd_pw = form.quantityd_pw.data
-        client_record.pharm_doc = form.pharm_doc.data
-        client_record.userid = current_user.id
-
-        db.session.commit()
-        flash('Client record updated successfully.', 'success')
-        return redirect(url_for('landing'))
-
     return render_template('update_pharm_record.html', form=form)
+
+def po_entry_exists(client_id, laspud_po):
+    existing_entry = DataEntry.query.filter_by(client_id=client_id, laspud_po=laspud_po).first()
+    return existing_entry is not None
+
+@app.route('/client_record', methods=['GET', 'POST'])
+def facility():
+    form = FacilityForm(request.form)
+    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+
+    if request.method == 'POST':
+        client_id = form.client_id.data
+        # Do something with the selected client_id (e.g., save it to the database)
+        client_record = DataEntry.query.filter_by(client_id=client_id, facility_name=form.facility_name.data).first()
+       
+        if not client_record:
+                flash('Client record not found.', 'danger')
+                return redirect(url_for('landing'))
+        
+        items = DataEntry.query.all()
+        dataitem = [{'client_id': item.client_id,'laspud_po':item.laspud_po} for item in items]
+        existing_record = [record for record in dataitem if record['client_id'] == client_id][0]
+
+        if not existing_record['laspud_po'] == '':
+            flash('Record already exists. Select new client for data entry.', 'warning')
+            return redirect(url_for('facility'))
+        else:
+            client_record.dregimen_po = form.dregimen_po.data
+            client_record.mrefill_po = form.mrefill_po.data
+            client_record.laspud_po = form.laspud_po.data
+            client_record.quantityd_po = form.quantityd_po.data
+            client_record.client_folder = form.client_folder.data
+            client_record.userid = current_user.id
+
+            
+            db.session.commit()
+            flash('Client record updated successfully.', 'success')
+        return redirect(url_for('landing'))
+    
+
+    return render_template('facility.html', form=form)
+
+@app.route('/get_client_ids')
+def get_client_ids():
+    facility_name = request.args.get('facility_name', type=str)
+    clients = DataEntry.query.filter_by(facility_name=facility_name).all()
+    client_id_choices = [(c.client_id, c.client_id) for c in clients]
+
+    return jsonify(client_id_choices)
+
+def get_client_data_from_db(client_id):
+    client = DataEntry.query.get(client_id)
+    return client
+
+@app.route('/get_client_data/<client_id>')
+def get_client_data(client_id):
+    # Assuming you have a function to get client data from the database
+    client_data = get_client_data_from_db(client_id)
+
+    return jsonify(
+        dregimen_po=client_data.dregimen_po,
+        dregimen_pw=client_data.dregimen_pw,
+        laspud_po=client_data.laspud_po,
+        laspud_pw=client_data.laspud_pw,
+        quantityd_po=client_data.quantityd_po,
+        quantityd_pw=client_data.quantityd_pw
+    )
 
 
 @app.cli.command('drop-data-entry-table')

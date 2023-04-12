@@ -5,7 +5,9 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Update Pharmacy Record</h1>
+    <div class="d-flex justify-content-center">
+        <h1 class="mb-3">Update Pharmacy Record</h1>
+    </div>
     <form method="POST" action="{{ url_for('update_pharm_record', client_id=client_id, facility_name=facility_name) }}">
         {{ form.hidden_tag() }}
         <table>
@@ -20,25 +22,27 @@
             </tr>
             <!-- Other table rows here -->
         </table>
+        <div class="spacing-div"></div>
+        <div class="spacing-div"></div>
         <div class="form-group">
-            <label for="{{ form.dregimen_pw.id }}">dregimen_pw</label>
+            <label for="{{ form.dregimen_pw.id }}">Current drug regimen</label>
             {{ form.dregimen_pw(class="form-control") }}
         </div>
         <div class="form-group">
-            <label for="{{ form.mrefill_pw.id }}">mrefill_pw</label>
+            <label for="{{ form.mrefill_pw.id }}">Months of Refill</label>
             {{ form.mrefill_pw(class="form-control") }}
         </div>
         <div class="form-group">
-            <label for="{{ form.laspud_pw.id }}">laspud_pw</label>
+            <label for="{{ form.laspud_pw.id }}">Last pickup date</label>
             {{ form.laspud_pw(class="form-control") }}
         </div>
         <div class="form-group">
-            <label for="{{ form.quantityd_pw.id }}">quantityd_pw</label>
+            <label for="{{ form.quantityd_pw.id }}">Quantity of drug dispenced to client</label>
             {{ form.quantityd_pw(class="form-control")}}
         </div>
         <div class="form-group">
-            <label for="{{ form.pharm_doc.id }}">pharm_doc</label>
-            {{ form.pharm_doc(class="form-check") }}
+            <label for="{{ form.pharm_doc.id }}">Pharmacy documentation found?</label>
+            {{ form.pharm_doc() }}
         </div>
         <button type="submit" class="btn btn-primary">Update Pharmacy Record</button>
     </form>

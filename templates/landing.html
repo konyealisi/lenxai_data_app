@@ -1,5 +1,4 @@
-<!-- templates/landing.html -->
-{% extends 'base.html' %}
+{% extends 'facilitybase.html' %}
 
 {% block head %}
   <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}"> -->
@@ -7,42 +6,43 @@
 
 {% block content %}
 <div class="container">
-    <div class="row justify-content-center align-items-center" style="height:100vh">
-        <div class="col-md-8">
-            <div class="d-flex justify-content-between align-items-center">
-                <h4 class="mb-3">Welcome, {{ current_user.username }}!</h4>
+    <div class="spacing-div"></div>
+    <div class="d-flex justify-content-between align-items-center">
+        <h4 class="mb-3">Welcome, {{ current_user.username }}!</h4>
+    </div>
+    <div class="spacing-div"></div>
+    <div class="d-flex justify-content-end">
+        <a href="{{ url_for('register') }}" class="btn btn-primary">Create New User</a>
+    </div>
+    <div class="spacing-div"></div>
+    <div class="card" style="width: 100%; min-height: 500px; background-color: #343a40; border: none;">
+        <div class="card-body">
+            <!-- content here -->
+            <div class="d-flex justify-content-center">
+                <h4 class="mb-4" style="color: white;">Select service:</h4>
             </div>
-            <div class="d-flex justify-content-end">
-                <a href="{{ url_for('register') }}" class="btn btn-primary">Create New User</a>
+            <div class="spacing-div"></div>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('upload_file') }}" class="btn btn-primary m-2">Data Upload</a>
             </div>
-            <div class="card" style="width: 100%; min-height: 500px;">
-                <div class="card-body">
-                    <!-- content here -->
-                    <div class="d-flex justify-content-center">
-                        <h4 class="mb-4">Select service:</h4>
-                    </div>
-                    <div class="spacing-div"></div>
-                    <div class="d-flex justify-content-center">
-                        <a href="{{ url_for('upload_file') }}" class="btn btn-primary m-2">Data Upload</a>
-                    </div>
-                    <div class="spacing-div"></div>
-                    <div class="d-flex justify-content-center">
-                        <a href="{{ url_for('data_entry') }}" class="btn btn-primary m-2">Enter Data</a>
-                    </div>
-                    <div class="spacing-div"></div>
-                    <div class="d-flex justify-content-center">
-                        <a href="{{ url_for('validate') }}" class="btn btn-primary m-2">Validate Entry</a>
-                    </div>
-                    <div class="spacing-div"></div>
-                    <div class="d-flex justify-content-center">
-                        <a href="{{ url_for('download') }}" class="btn btn-primary m-2">Download</a>
-                    </div>
-                </div>
+            <div class="spacing-div"></div>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('data_entry') }}" class="btn btn-primary m-2">Enter Data</a>
             </div>
-            <div class="d-flex justify-content-end">
-                <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+            <div class="spacing-div"></div>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('validate_client_record') }}" class="btn btn-primary m-2">Validate Entry</a>
+            </div>
+            <div class="spacing-div"></div>
+            <div class="d-flex justify-content-center">
+                <a href="{{ url_for('download') }}" class="btn btn-primary m-2">Download</a>
             </div>
         </div>
     </div>
+    <div class="spacing-div"></div>
+    <div class="d-flex justify-content-end">
+        <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+    </div>
+    <div class="spacing-div"></div>
 </div>
 {% endblock %}

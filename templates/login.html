@@ -1,50 +1,36 @@
-{% extends "base.html" %}
-
-{% block head %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-{% endblock %}
+{% extends "facilitybase.html" %}
 
 {% block content %}
 <div class="container">
-  <div class="row justify-content-center align-items-center" style="height:100vh">
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-body">
-          <h2 class="card-title text-center">Login</h2>
-          <form method="POST" action="{{ url_for('login') }}">
-            {{ login_form.hidden_tag() }}
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="alert alert-danger">
-                    {% for category, message in messages %}
-                        {{ message }}
-                    {% endfor %}
+    <div class="row justify-content-center align-items-center" style="height:100vh">
+        <div class="col-md-6">
+            <div class="card" style="background-color: #343a40;">
+                <div class="card-body">
+                    <h2 class="card-title text-center" style="color: white;">Login</h2>
+                    <form method="POST" action="{{ url_for('login') }}">
+                        {{ login_form.hidden_tag() }}
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="alert alert-danger">
+                                {% for category, message in messages %}
+                                    {{ message }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% endwith %}
+                        <div class="form-group">
+                            <label for="{{ login_form.email.id }}" style="color: white;">Email</label>
+                            {{ login_form.email(class="form-control", placeholder="Email") }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ login_form.password.id }}" style="color: white;">Password</label>
+                            {{ login_form.password(class="form-control", placeholder="Password") }}
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    </form>
                 </div>
-            {% endif %}
-            {% endwith %}
-
-            <div class="form-group">
-              <label for="{{ login_form.email.id }}">Email</label>
-              {{ login_form.email(class="form-control", placeholder="Email") }}
             </div>
-            <div class="form-group">
-              <label for="{{ login_form.password.id }}">Password</label>
-              {{ login_form.password(class="form-control", placeholder="Password") }}
-            </div>
-            <button type="submit" class="btn btn-primary btn-block">Login</button>
-          </form>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 {% endblock %}
-
-{% block scripts %}
-  <script src="{{ url_for('static', filename='js/jquery-3.5.1.slim.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-{% endblock %}
-

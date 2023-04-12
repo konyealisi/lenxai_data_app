@@ -1,10 +1,15 @@
-{% extends "base.html" %}
+{% extends "facilitybase.html" %}
 
 {% block content %}
-    <h1>Registered Users</h1>
-    <table class="table table-bordered table-striped">
+<div class="container">
+    <div class="spacing-div"></div>
+    <div class="d-flex justify-content-center">
+        <h1 style="color: white;">Registered Users</h1>
+    </div>
+    <div class="spacing-div"></div>
+    <table class="table table-bordered table-striped" style="background-color: #343a40;">
         <thead>
-            <tr>
+            <tr style="color: white;">
                 <th>User ID</th>
                 <th>Username</th>
                 <th>Email</th>
@@ -14,7 +19,7 @@
         </thead>
         <tbody>
             {% for user in users %}
-                <tr>
+                <tr style="color: white;">
                     <td>{{ user.id }}</td>
                     <td>{{ user.username }}</td>
                     <td>{{ user.email }}</td>
@@ -24,4 +29,6 @@
             {% endfor %}
         </tbody>
     </table>
+    <div class="spacing-div"></div>
+</div>
 {% endblock %}

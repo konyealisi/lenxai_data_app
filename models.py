@@ -45,8 +45,8 @@ class DataEntry(db.Model):
     quantityd_pw = db.Column(db.Integer, nullable=True)
     quantityd_po_correct = db.Column(db.Boolean, nullable=True)
     quantityd_pw_correct = db.Column(db.Boolean, nullable=True)
-    pharm_doc = db.Column(db.Boolean, nullable=True)
-    client_folder = db.Column(db.Boolean, nullable=True)
+    pharm_doc = db.Column(db.String(5), nullable=True)
+    client_folder = db.Column(db.String(5), nullable=True)
 
     # def __repr__(self):
     #     return f'<DataEntry {self.first_name} {self.last_name}>'
