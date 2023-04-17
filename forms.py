@@ -130,12 +130,12 @@ class ValidateRecordForm(FlaskForm):
     facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
     client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
 
-    dregimen_po_correct = RadioField('dregimen_po_correct', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
-    dregimen_pw_correct = RadioField('dregimen_pw_correct', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
-    laspud_po_correct = RadioField('laspud_po_correct', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
-    laspud_pw_correct = RadioField('laspud_pw_correct', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
-    quantityd_po_correct = RadioField('quantityd_po_correct', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
-    quantityd_pw_correct = RadioField('quantityd_pw_correct', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
+    dregimen_po_correct = RadioField('dregimen_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+    dregimen_pw_correct = RadioField('dregimen_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+    laspud_po_correct = RadioField('laspud_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+    laspud_pw_correct = RadioField('laspud_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+    quantityd_po_correct = RadioField('quantityd_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+    quantityd_pw_correct = RadioField('quantityd_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
 
     submit = SubmitField('Validate Client Record')
 
@@ -195,5 +195,6 @@ class FacilityForm(FlaskForm):
     mrefill_po = IntegerField('mrefill_po', validators=[DataRequired()])
     laspud_po = DateField('laspud_po', format='%Y-%m-%d', validators=[DataRequired()])
     quantityd_po = IntegerField('quantityd_po', validators=[DataRequired()])
-    client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
+   # client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
+    client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
     submit = SubmitField('Update Client Record')                                                                                                    

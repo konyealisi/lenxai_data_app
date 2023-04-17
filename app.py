@@ -73,16 +73,31 @@ def populate_tables():
 
 # custom decorator for restricting access to app 
 # resources based on user roles and access level
+# def requires_roles(*roles):
+#     def decorator(f):
+#         @wraps(f)
+#         def decorated_function(*args, **kwargs):
+#             if not current_user.is_authenticated or current_user.role not in roles:
+#                 flash('You do not have permission to access this page.')
+#                 return redirect(url_for('login'))
+#             return f(*args, **kwargs)
+#         return decorated_function
+#     return decorator
+
 def requires_roles(*roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if not current_user.is_authenticated or current_user.role not in roles:
+            if not current_user.is_authenticated:
+                flash('Login required.')
+                return redirect(url_for('login'))
+            elif current_user.role not in roles:
                 flash('You do not have permission to access this page.')
-                return redirect(url_for('index'))
+                return redirect(url_for('landing'))
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
 
 @app.route('/get_data_entry', methods=['GET'])
 def get_data_entry():
@@ -181,10 +196,10 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
-# Home route
-@app.route("/")
-def home():
-    return render_template("index.html")
+# # Home route
+# @app.route("/")
+# def home():
+#     return render_template("index.html")
 
 # register route - for creating new user by authorized user - sysadmin, admin, and superuser
 @app.route('/register', methods=['GET', 'POST'])
@@ -239,7 +254,7 @@ def logout():
     session.clear()
     db.session.remove()
     # Redirect the user to the login page or another page of your choice
-    return redirect(url_for("home"))
+    return redirect(url_for("login"))
 
  
 # Route to render the download page - this redirects to the download_csv route
@@ -286,6 +301,16 @@ def landing():
 @login_required
 def data_entry():
     return render_template("dataentry.html")
+
+@app.route("/validate_entry")
+@requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator')
+def validate_entry():
+    return render_template("valentry.html")
+
+@app.route("/update_record")
+@requires_roles('sysadmin', 'admin')
+def update_record():
+    return render_template("updaterecord.html")
 
 # Ensure the UPLOAD_FOLDER exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -548,7 +573,7 @@ def po_entry_exists(client_id, laspud_po):
     return existing_entry is not None
 
 @app.route('/client_record', methods=['GET', 'POST'])
-def facility():
+def client_record():
     form = FacilityForm(request.form)
     form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
 
@@ -669,7 +694,7 @@ def inject_current_year():
 
 #@app.route('/')
 @app.route('/index')
-@login_required
+#@login_required
 def index():
     return render_template('index.html', title='Home')
 
@@ -680,3 +705,4 @@ if __name__ == '__main__':
         # Call the function to populate the tables
         populate_tables()
     app.run(debug=True)
+    #app.run(host='192.168.0.9', port=5000)

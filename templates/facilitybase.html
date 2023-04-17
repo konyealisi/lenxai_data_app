@@ -8,12 +8,13 @@
     {% endblock %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
+        .body {
             background-color: black;
             color: white;
         }
         .container {
-            width: 100%;
+            /* width: 100%; */
+            max-width: 960px;
             margin: 0 auto;
         }
         .form-control,
@@ -33,6 +34,10 @@
             bottom: 0;
             width: 100%;
         }
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
     </style>
 </head>
 <body>

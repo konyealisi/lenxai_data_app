@@ -11,7 +11,8 @@
             color: white;
         }
         .container {
-            width: 50%;
+            width: 90%;
+            max-width: 960px;
             margin: 0 auto;
         }
         .form-control,
@@ -34,26 +35,8 @@
     </style>
 </head>
 <body>
-    <!-- Navigation bar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('landing') }}">Home</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('download') }}">Download data</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
+    
+    {% include "navbar.html" %}
     
     <div class="container">
         <div class="spacing-div"></div>
@@ -77,7 +60,7 @@
             <div class="spacing-div"></div>
             <div class="spacing-div"></div>
             <div class="form-group">
-                <label for="{{ form.dregimen_po.id }}">Drug Regimen Client's Record</label>
+                <label for="{{ form.dregimen_po.id }}">Drug Regimen Client's Record (Client's Folder)</label>
                 {{ form.dregimen_po(class="form-control") }}
             </div>
             <div class="spacing-div"></div>
@@ -130,30 +113,6 @@
                 });
             });
     </script>
-    <script>
-    function update_data(clientId) {
-        if (clientId) {
-            // Fetch data from the server based on the selected client_id
-            fetch('/get_client_data/${clientId}')
-            .then((response) => response.json())
-            .then((data) => {
-                // Update the client-data container with the fetched data
-                let clientDataContainer = document.getElementById("client-data");
-                clientDataContainer.innerHTML = `
-                <p>dregimen_po: ${data.dregimen_po}</p> 
-                <p>dregimen_pw: ${data.dregimen_pw}</p> 
-                <p>laspud_po: ${data.laspud_po}</p> 
-                <p>laspud_pw: ${data.laspud_pw}</p>
-                <p>quantityd_po: ${data.quantityd_po}</p>
-                <p>quantityd_pw: ${data.quantityd_pw}</p>
-                `;
-            });
-        } else {
-            // Clear the client-data container if no client_id is selected
-            document.getElementById("client-data").innerHTML = "";
-        }
-    }
-</script>
 
 </body>
 </html>
