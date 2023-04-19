@@ -1,6 +1,7 @@
 # utils.py
 from wtforms.validators import  ValidationError
-from models import User, DataEntry
+from models import User, DataEntry, Facility
+from datetime import datetime, timedelta
 
 def facility_choices():
     facilities = DataEntry.query.with_entities(DataEntry.facility_name, DataEntry.facility_name).distinct().all()
@@ -53,3 +54,19 @@ def validate_email(form, field):
     user = User.query.filter_by(email=email).first()
     if user:
         raise ValidationError('Email is already taken.')
+    
+
+def entry_exists(client_id, facility_name):
+    existing_entry = DataEntry.query.filter_by(client_id=client_id, facility_name=facility_name).first()
+    return existing_entry is not None
+
+def facility_exists(facility_name):
+    existing_facility = Facility.query.filter_by(facility_name=facility_name).first()
+    return existing_facility is not None
+
+def curr(last_pickup_date, cutoff, grace_period):
+    grace_period_timedelta = timedelta(days=grace_period)
+    if last_pickup_date + grace_period_timedelta >= cutoff:
+        return 'yes'
+    else:
+        return 'no'

@@ -5,7 +5,7 @@ import os
 
 import re
 
-from sqlalchemy import text
+from sqlalchemy import text, create_engine, inspect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -17,15 +17,18 @@ from io import StringIO
 from flask import Response
 from flask_migrate import Migrate
 from flask import current_app
-from datetime import datetime
+from datetime import datetime, timedelta, date
 import pandas as pd
 from werkzeug.utils import secure_filename
 from functools import wraps
 
 from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, ClientRecordUpdateForm,PharmacyRecordUpdateForm, ValidateRecordForm, FacilityClientForm, FacilityForm
-from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe
-from models import db, User, DataEntry, FacilityNameItem, ClientIdItem, UserIdItem
-from sqlalchemy import create_engine
+from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr
+from models import db, User, DataEntry, Facility, FacilityNameItem, ClientIdItem, UserIdItem
+from sqlalchemy.engine.reflection import Inspector
+from flask.cli import AppGroup
+
+
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -39,6 +42,11 @@ db_name = os.environ.get('DB_NAME_ndqadata')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}/{db_name}'
 
 db.init_app(app)
+
+# Create a group of commands for user management
+user_cli = AppGroup('user')
+# Register the command group with the app
+app.cli.add_command(user_cli)
 
 # Initialize the migration tool 
 # this is used to modify the database schema 
@@ -70,6 +78,8 @@ def populate_tables():
             new_user_id_item = UserIdItem(user_id=user_id[0])
             db.session.add(new_user_id_item)
             db.session.commit()
+
+
 
 # custom decorator for restricting access to app 
 # resources based on user roles and access level
@@ -276,7 +286,7 @@ def download_csv():
 
     # Create a CSV file in memory
     csv_file = StringIO()
-    fieldnames = ['userid','facility_name','facility_id','geolocation','client_id','name','age','sex','dregimen_ll','tx_age','dregimen_po','dregimen_pw','mrefill_ll','mrefill_po','mrefill_pw','laspud_ll','laspud_po','laspud_pw','quantityd_po','quantityd_pw','client_folder', 'laspud_pw_correct', 'dregimen_po_correct', 'quantityd_pw_correct', 'dregimen_pw_correct', 'pharm_doc', 'laspud_po_correct', 'quantityd_po_correct']  # Replace with your actual column names
+    fieldnames = ['userid','facility_name','facility_id','geolocation','client_id','client_name','age','sex','dregimen_ll','tx_age','dregimen_po','dregimen_pw','mrefill_ll','mrefill_po','mrefill_pw','laspud_ll','laspud_po','laspud_pw','curr_ll','curr_cr','curr_pr','quantityd_po','quantityd_pw','client_folder', 'laspud_pw_correct', 'dregimen_po_correct', 'quantityd_pw_correct', 'dregimen_pw_correct', 'pharm_doc', 'laspud_po_correct', 'quantityd_po_correct']  # Replace with your actual column names
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
     writer.writeheader()
     for row in data_list:
@@ -316,9 +326,9 @@ def update_record():
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-def entry_exists(client_id, facility_name):
-    existing_entry = DataEntry.query.filter_by(client_id=client_id, facility_name=facility_name).first()
-    return existing_entry is not None
+
+cutoff = date(year=2022, month=6, day=30)
+grace_period = 28
 
 @app.route('/upload', methods=['GET', 'POST'])
 @requires_roles('sysadmin','admin')
@@ -360,25 +370,51 @@ def upload_file():
             
             df['age'] = df.apply(lambda row: calculate_age(row['date_of_birth'], row['last_pickup_date']), axis=1)
             df['tx_age'] = df.apply(lambda row: calculate_age_in_months(row['art_start_date'], row['last_pickup_date']), axis=1)
+            #df['curr_ll'] = df.apply(lambda row: curr(row['last_pickup_date'], row['cutoff'], row['grace_period']), axis=1)
+            df['curr_ll'] = df.apply(lambda row: curr(row['last_pickup_date'], cutoff, grace_period), axis=1)
+
 
 
             # Process the data and save it to the database
             column_mapping = {
                 'facility': 'facility_name',
-                'u_code': 'facility_id',
-                'geo_loc': 'geolocation',
                 'unique_id': 'client_id',
-                'patient_id': 'name',
+                'patient_id': 'client_name',
                 'sex': 'sex',
                 'age': 'age',
                 'tx_age': 'tx_age',
                 'current_art_regimen': 'dregimen_ll',
                 'months_of_arv_refill': 'mrefill_ll',
                 'last_pickup_date': 'laspud_ll',
+                'curr_ll': 'curr_ll'
+            }
+
+            
+            # Process the data and save it to the database
+            facility_mapping = {
+                'facility': 'facility_name',
+                'state': 'state',
+                'lga': 'lga',
+                'lat': 'latitude',
+                'long': 'longitude'
+                
             }
 
 
-            # Process the data and save it to the database
+            # Process the data and save it to the database -Facility table
+            for index, row in df.iterrows():
+                fac_data = {}
+                for file_col, data_entry_col in facility_mapping.items():
+                    if file_col in df.columns:  # Check if the file_col exists in the DataFrame
+                        fac_data[data_entry_col] = row[file_col]
+                    else:
+                        fac_data[data_entry_col] = None  # Assign a default value (e.g., None) if the file_col is missing
+                if not facility_exists(fac_data['facility_name']):
+                    new_entry = Facility(**fac_data)
+                    db.session.add(new_entry)
+                    db.session.commit()
+            
+            # Process the data and save it to the database -DataEntry table
             for index, row in df.iterrows():
                 entry_data = {}
                 for file_col, data_entry_col in column_mapping.items():
@@ -390,6 +426,8 @@ def upload_file():
                     new_entry = DataEntry(**entry_data)
                     db.session.add(new_entry)
                     db.session.commit()
+
+            
 
             flash('Data uploaded successfully!', 'success')
             return redirect(url_for('landing'))
@@ -640,53 +678,98 @@ def get_client_data(client_id):
 #@requires_roles('sysadmin')
 def drop_data_entry_table():
     with app.app_context():
-        sql = text('DROP TABLE IF EXISTS data_entry;')
-        result = db.session.execute(sql)
-        db.session.commit()
-        print("Dropped table 'data_entry' successfully.")
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        print(table_names)
+        if 'data_entry' in table_names:
+            sql = text('DROP TABLE data_entry;')
+            result = db.session.execute(sql)
+            db.session.commit()
+            print("Dropped table 'data_entry' successfully.")
+        else:
+            print("Table not found.")
 # flask drop-data-entry-table
+
 
 @app.cli.command('drop-facility_name_item-table')
 #@requires_roles('sysadmin')
-def drop_data_entry_table():
+def drop_data_facility_name_table():
     with app.app_context():
-        sql = text('DROP TABLE IF EXISTS facility_name_item;')
-        result = db.session.execute(sql)
-        db.session.commit()
-        print("Dropped table 'facility_name_item' successfully.")
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        print(table_names)
+        if 'facility_name_item' in table_names:
+            sql = text('DROP TABLE facility_name_item;')
+            result = db.session.execute(sql)
+            db.session.commit()
+            print("Dropped table 'facility_name_item' successfully.")
+        else:
+            print("Table not found.")
 # flask drop-facility_name_item-table
 
+@app.cli.command('drop-client_id_item-table')
+#@requires_roles('sysadmin')
+def drop_data_client_id_table():
+    with app.app_context():
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        print(table_names)
+        if 'client_id_item' in table_names:
+            sql = text('DROP TABLE client_id_item;')
+            result = db.session.execute(sql)
+            db.session.commit()
+            print("Dropped table 'client_id_item' successfully.")
+        else:
+            print("Table not found.")
+# flask drop-client_id_item-table
 
-# @app.cli.command('drop-user-table')
-# def drop_user_table():
-#     with app.app_context():
-#         sql = text('DROP TABLE IF EXISTS "user" CASCADE;')
-#         result = db.session.execute(sql)
-#         db.session.commit()
-#         print("Dropped table 'user' successfully.")
-# # flask drop-user-table
-
-from flask.cli import AppGroup
-
-# Create a group of commands for user management
-user_cli = AppGroup('user')
-
-# Drop the user table if the current user is an admin
-@user_cli.command('drop_table')
+@app.cli.command('drop-user-table')
 #@requires_roles('sysadmin')
 def drop_user_table():
-    # Check if the current user is an admin
-    #if current_user.is_authenticated and current_user.role == 'admin':
-        with current_app.app_context():
-            sql = text('DROP TABLE IF EXISTS "user" CASCADE;')
-            db.session.execute(sql)
+    with app.app_context():
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        print(table_names)
+        if 'user' in table_names:
+            sql = text('DROP TABLE "user";')
+            result = db.session.execute(sql)
             db.session.commit()
-            print("User table dropped.")
-    #else:
-     #   print("Only admins can perform this action.")
-# Register the command group with the app
-app.cli.add_command(user_cli)
-#flask user drop_table
+            print("Dropped table 'user' successfully.")
+        else:
+            print("Table not found.")
+# flask drop-user-table
+
+@app.cli.command('drop-facility-table')
+#@requires_roles('sysadmin')
+def drop_facility_table():
+    with app.app_context():
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        print(table_names)
+        if 'facility' in table_names:
+            sql = text('DROP TABLE facility;')
+            result = db.session.execute(sql)
+            db.session.commit()
+            print("Dropped table 'facility' successfully.")
+        else:
+            print("Table not found.")
+# flask drop-user-table
+
+@app.cli.command('drop-user_id_item-table')
+#@requires_roles('sysadmin')
+def drop_data_user_id_table():
+    with app.app_context():
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        print(table_names)
+        if 'user_id_item' in table_names:
+            sql = text('DROP TABLE user_id_item;')
+            result = db.session.execute(sql)
+            db.session.commit()
+            print("Dropped table 'user_id_item' successfully.")
+        else:
+            print("Table not found.")
+# flask drop-user_id_item-table
 
 @app.context_processor
 def inject_current_year():
