@@ -21,7 +21,8 @@ db = SQLAlchemy()
 # This define the main database - postgres
 # that all store data collect using the system
 class DataEntry(db.Model):
-    userid = db.Column(db.Integer, nullable=True) # User Id, Id of the user making the entry
+    userid_cr = db.Column(db.Integer, nullable=True) # User Id, Id of the user making the entry
+    userid_pr = db.Column(db.Integer, nullable=True) # User Id, Id of the user making the entry
     #facility_name = db.Column(db.String(100), nullable=False) # Name of the health facility been accessed - data loaded via bulk data uoplad
     #facility_id = db.Column(db.String(100), nullable=True) # Id of the health facility (where available)
     facility_name = db.Column(db.String, ForeignKey("facility.facility_name"), nullable=True)
@@ -104,6 +105,9 @@ class Facility(db.Model):
     txcurr_cr = db.Column(db.Integer, nullable=True)
     txcurr_pr = db.Column(db.Integer, nullable=True)
     txcurr_vf = db.Column(Numeric(precision=5, scale=2), nullable=True)
+
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 
