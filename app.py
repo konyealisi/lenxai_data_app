@@ -22,8 +22,8 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, ClientRecordUpdateForm,PharmacyRecordUpdateForm, ValidateRecordForm, FacilityClientForm, FacilityForm
-from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr
+from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, ClientRecordUpdateForm,PharmacyRecordUpdateForm, ValidateRecordForm, FacilityClientForm, FacilityForm, PhamarcyForm
+from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr 
 from models import db, User, DataEntry, Facility, FacilityNameItem, ClientIdItem, UserIdItem
 from sqlalchemy.engine.reflection import Inspector
 from flask.cli import AppGroup
@@ -81,19 +81,6 @@ def populate_tables():
 
 
 
-# custom decorator for restricting access to app 
-# resources based on user roles and access level
-# def requires_roles(*roles):
-#     def decorator(f):
-#         @wraps(f)
-#         def decorated_function(*args, **kwargs):
-#             if not current_user.is_authenticated or current_user.role not in roles:
-#                 flash('You do not have permission to access this page.')
-#                 return redirect(url_for('login'))
-#             return f(*args, **kwargs)
-#         return decorated_function
-#     return decorator
-
 def requires_roles(*roles):
     def decorator(f):
         @wraps(f)
@@ -108,6 +95,11 @@ def requires_roles(*roles):
         return decorated_function
     return decorator
 
+
+@app.route('/')
+@app.route('/index')
+def index():
+    return render_template('index.html', title='Home')
 
 @app.route('/get_data_entry', methods=['GET'])
 def get_data_entry():
@@ -275,18 +267,51 @@ def download():
 
 # Download_csv route - let authorized user (sysadmin, admin, superuser) download 
 # data entered and stored by the platform
+# @app.route('/download_csv', methods=['GET'])
+# @requires_roles('sysadmin', 'admin', 'superuser')
+# def download_csv():
+#     # Query data from the database
+#     data = DataEntry.query.all()
+
+#     # Convert data to a list of dictionaries
+#     data_list = [row.to_dict() for row in data]
+
+#     # Create a CSV file in memory
+#     csv_file = StringIO()
+#     fieldnames = ['userid_cr','facility_name','facility_id','geolocation','client_id','client_name','age','sex','dregimen_ll','tx_age','dregimen_po','dregimen_pw','mrefill_ll','mrefill_po','mrefill_pw','laspud_ll','laspud_po','laspud_pw','curr_ll','curr_cr','curr_pr','quantityd_po','quantityd_pw','client_folder', 'laspud_pw_correct', 'dregimen_po_correct', 'quantityd_pw_correct', 'dregimen_pw_correct', 'pharm_doc', 'laspud_po_correct', 'quantityd_po_correct']  # Replace with your actual column names
+#     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+#     writer.writeheader()
+#     for row in data_list:
+#         writer.writerow(row)
+
+#     # Serve the CSV file as a response
+#     response = Response(
+#         csv_file.getvalue(),
+#         mimetype='text/csv',
+#         headers={'Content-Disposition': 'attachment;filename=data.csv'}
+#     )
+
+#     return response
+
 @app.route('/download_csv', methods=['GET'])
 @requires_roles('sysadmin', 'admin', 'superuser')
 def download_csv():
-    # Query data from the database
-    data = DataEntry.query.all()
+    # Query data from the database and join DataEntry and Facility tables on facility_name
+    data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name).all()
 
     # Convert data to a list of dictionaries
-    data_list = [row.to_dict() for row in data]
+    data_list = []
+    for row in data:
+        data_entry = row.DataEntry.to_dict()
+        facility = row.Facility.to_dict()
+        merged_data = {**data_entry, **facility}
+        data_list.append(merged_data)
 
     # Create a CSV file in memory
     csv_file = StringIO()
-    fieldnames = ['userid','facility_name','facility_id','geolocation','client_id','client_name','age','sex','dregimen_ll','tx_age','dregimen_po','dregimen_pw','mrefill_ll','mrefill_po','mrefill_pw','laspud_ll','laspud_po','laspud_pw','curr_ll','curr_cr','curr_pr','quantityd_po','quantityd_pw','client_folder', 'laspud_pw_correct', 'dregimen_po_correct', 'quantityd_pw_correct', 'dregimen_pw_correct', 'pharm_doc', 'laspud_po_correct', 'quantityd_po_correct']  # Replace with your actual column names
+    fieldnames = ['facility_name','facility_id', 'state', 'lga', 'latitude', 'longitude','client_id','client_name','sex','age','tx_age','dregimen_ll','mrefill_ll','laspud_ll','curr_ll',
+                    'userid_cr','dregimen_po','mrefill_po','laspud_po','quantityd_po','curr_cr','client_folder','dregimen_po_correct','laspud_po_correct','quantityd_po_correct', 
+                        'userid_pr','dregimen_pw','mrefill_pw','laspud_pw','quantityd_pw','curr_pr','pharm_doc', 'dregimen_pw_correct','laspud_pw_correct','quantityd_pw_correct']
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
     writer.writeheader()
     for row in data_list:
@@ -300,6 +325,7 @@ def download_csv():
     )
 
     return response
+
 
 # The main landing page
 @app.route("/landing")
@@ -530,52 +556,52 @@ def fetch_client_record():
 
 #     return render_template('update_client_record.html', form=form)
 
-@app.route('/update_client_record', methods=['GET', 'POST'])
-@login_required
-def update_client_record():
-    form = ClientRecordUpdateForm()
+# @app.route('/update_client_record', methods=['GET', 'POST'])
+# @login_required
+# def update_client_record():
+#     form = ClientRecordUpdateForm()
 
-    facility_client_form = FacilityClientForm()
-    facility_client_form.facility.choices = [(f.id, f.facility_name) for f in FacilityNameItem.query.order_by('facility_name')]
+#     facility_client_form = FacilityClientForm()
+#     facility_client_form.facility.choices = [(f.id, f.facility_name) for f in FacilityNameItem.query.order_by('facility_name')]
 
-    if request.method == 'POST' and facility_client_form.validate():
-        selected_facility = FacilityNameItem.query.get(facility_client_form.facility.data)
-        facility_client_form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
-        #facility_client_form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
+#     if request.method == 'POST' and facility_client_form.validate():
+#         selected_facility = FacilityNameItem.query.get(facility_client_form.facility.data)
+#         facility_client_form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
+#         #facility_client_form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
 
-        if form.validate_on_submit():
-            client_id_value = form.client_id.data.client_id
-            client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+#         if form.validate_on_submit():
+#             client_id_value = form.client_id.data.client_id
+#             client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
 
-            if not client_record:
-                flash('Client record not found.', 'danger')
-                return redirect(url_for('landing'))
+#             if not client_record:
+#                 flash('Client record not found.', 'danger')
+#                 return redirect(url_for('landing'))
 
-            client_record.dregimen_po = form.dregimen_po.data
-            client_record.mrefill_po = form.mrefill_po.data
-            client_record.laspud_po = form.laspud_po.data
-            client_record.quantityd_po = form.quantityd_po.data
-            client_record.client_folder = form.client_folder.data
-            client_record.userid = current_user.id
+#             client_record.dregimen_po = form.dregimen_po.data
+#             client_record.mrefill_po = form.mrefill_po.data
+#             client_record.laspud_po = form.laspud_po.data
+#             client_record.quantityd_po = form.quantityd_po.data
+#             client_record.client_folder = form.client_folder.data
+#             client_record.userid = current_user.id
 
-            db.session.commit()
-            flash('Client record updated successfully.', 'success')
-            return redirect(url_for('landing'))
+#             db.session.commit()
+#             flash('Client record updated successfully.', 'success')
+#             return redirect(url_for('landing'))
 
-    return render_template('update_client_record.html', form=form, facility_client_form=facility_client_form)
+#     return render_template('update_client_record.html', form=form, facility_client_form=facility_client_form)
 
-@app.route('/facility_client', methods=['GET', 'POST'])
-def facility_client():
-    form = FacilityClientForm()
-    form.facility.choices = [(f.id, f.facility_name) for f in FacilityNameItem.query.order_by('facility_name')]
+# @app.route('/facility_client', methods=['GET', 'POST'])
+# def facility_client():
+#     form = FacilityClientForm()
+#     form.facility.choices = [(f.id, f.facility_name) for f in FacilityNameItem.query.order_by('facility_name')]
     
-    if form.validate_on_submit():
-        selected_facility = FacilityNameItem.query.get(form.facility.data)
-        form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
-    else:
-        form.client_id.choices = []
+#     if form.validate_on_submit():
+#         selected_facility = FacilityNameItem.query.get(form.facility.data)
+#         form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
+#     else:
+#         form.client_id.choices = []
 
-    return render_template('facility_client.html', form=form)
+#     return render_template('facility_client.html', form=form)
 
 @app.route('/update_pharm_record', methods=['GET', 'POST'])
 @login_required
@@ -624,28 +650,123 @@ def client_record():
                 flash('Client record not found.', 'danger')
                 return redirect(url_for('landing'))
         
-        items = DataEntry.query.all()
-        dataitem = [{'client_id': item.client_id,'laspud_po':item.laspud_po} for item in items]
-        existing_record = [record for record in dataitem if record['client_id'] == client_id][0]
-
-        if not existing_record['laspud_po'] == '':
-            flash('Record already exists. Select new client for data entry.', 'warning')
-            return redirect(url_for('facility'))
-        else:
+        if not client_record.dregimen_po:
             client_record.dregimen_po = form.dregimen_po.data
+        if not client_record.mrefill_po:
             client_record.mrefill_po = form.mrefill_po.data
+        if not client_record.laspud_po:
             client_record.laspud_po = form.laspud_po.data
+        if not client_record.quantityd_po:
             client_record.quantityd_po = form.quantityd_po.data
+        if not client_record.client_folder:
             client_record.client_folder = form.client_folder.data
-            client_record.userid = current_user.id
 
-            
-            db.session.commit()
-            flash('Client record updated successfully.', 'success')
+        client_record.userid_cr = current_user.id
+        client_record.curr_cr = curr(client_record.laspud_po, cutoff, grace_period)
+
+
+        db.session.commit()
+        flash('Client record updated successfully.', 'success')
         return redirect(url_for('landing'))
     
 
     return render_template('facility.html', form=form)
+
+@app.route('/update_client_record', methods=['GET', 'POST'])
+def update_client_record():
+    form = FacilityForm(request.form)
+    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+
+    if request.method == 'POST':
+        client_id = form.client_id.data
+        # Do something with the selected client_id (e.g., save it to the database)
+        client_record = DataEntry.query.filter_by(client_id=client_id, facility_name=form.facility_name.data).first()
+       
+        if not client_record:
+                flash('Client record not found.', 'danger')
+                return redirect(url_for('landing'))
+        
+        client_record.dregimen_po = form.dregimen_po.data
+        client_record.mrefill_po = form.mrefill_po.data
+        client_record.laspud_po = form.laspud_po.data
+        client_record.quantityd_po = form.quantityd_po.data
+        client_record.client_folder = form.client_folder.data
+        client_record.userid_cr = current_user.id
+        client_record.curr_cr = curr(client_record.laspud_po, cutoff, grace_period)
+
+
+        db.session.commit()
+        flash('Client record updated successfully.', 'success')
+        return redirect(url_for('landing'))
+    
+
+    return render_template('update_client_record.html', form=form)
+
+@app.route('/client_record', methods=['GET', 'POST'])
+def client_record():
+    form = FacilityForm(request.form)
+    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+
+    if request.method == 'POST':
+        client_id = form.client_id.data
+        # Do something with the selected client_id (e.g., save it to the database)
+        client_record = DataEntry.query.filter_by(client_id=client_id, facility_name=form.facility_name.data).first()
+       
+        if not client_record:
+                flash('Client record not found.', 'danger')
+                return redirect(url_for('landing'))
+        
+        if not client_record.dregimen_po:
+            client_record.dregimen_po = form.dregimen_po.data
+        if not client_record.mrefill_po:
+            client_record.mrefill_po = form.mrefill_po.data
+        if not client_record.laspud_po:
+            client_record.laspud_po = form.laspud_po.data
+        if not client_record.quantityd_po:
+            client_record.quantityd_po = form.quantityd_po.data
+        if not client_record.client_folder:
+            client_record.client_folder = form.client_folder.data
+
+        client_record.userid_cr = current_user.id
+        client_record.curr_cr = curr(client_record.laspud_po, cutoff, grace_period)
+
+
+        db.session.commit()
+        flash('Client record updated successfully.', 'success')
+        return redirect(url_for('landing'))
+    
+
+    return render_template('facility.html', form=form)
+
+@app.route('/update_client_record', methods=['GET', 'POST'])
+def update_client_record():
+    form = FacilityForm(request.form)
+    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+
+    if request.method == 'POST':
+        client_id = form.client_id.data
+        # Do something with the selected client_id (e.g., save it to the database)
+        client_record = DataEntry.query.filter_by(client_id=client_id, facility_name=form.facility_name.data).first()
+       
+        if not client_record:
+                flash('Client record not found.', 'danger')
+                return redirect(url_for('landing'))
+        
+        client_record.dregimen_po = form.dregimen_po.data
+        client_record.mrefill_po = form.mrefill_po.data
+        client_record.laspud_po = form.laspud_po.data
+        client_record.quantityd_po = form.quantityd_po.data
+        client_record.client_folder = form.client_folder.data
+        client_record.userid_cr = current_user.id
+        client_record.curr_cr = curr(client_record.laspud_po, cutoff, grace_period)
+
+
+        db.session.commit()
+        flash('Client record updated successfully.', 'success')
+        return redirect(url_for('landing'))
+    
+
+    return render_template('update_client_record.html', form=form)
 
 @app.route('/get_client_ids')
 def get_client_ids():
@@ -774,12 +895,6 @@ def drop_data_user_id_table():
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.utcnow().year}
-
-#@app.route('/')
-@app.route('/index')
-#@login_required
-def index():
-    return render_template('index.html', title='Home')
 
 
 if __name__ == '__main__':

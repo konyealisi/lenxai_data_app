@@ -195,6 +195,17 @@ class FacilityForm(FlaskForm):
     mrefill_po = IntegerField('mrefill_po', validators=[DataRequired()])
     laspud_po = DateField('laspud_po', format='%Y-%m-%d', validators=[DataRequired()])
     quantityd_po = IntegerField('quantityd_po', validators=[DataRequired()])
-   # client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
+    client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+    submit = SubmitField('Update Client Record')
+
+
+class PhamarcyForm(FlaskForm):
+    facility_name = SelectField('Facility Name', choices=[])
+    client_id = SelectField('Client ID', choices=[])
+
+    dregimen_p11111w1111111111111 = StringField('dregimen_po', validators=[DataRequired()])
+    mrefill_po = IntegerField('mr111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111efill_po', validators=[DataRequired()])
+    laspud_po = DateField('laspud_po', format='%Y-%m-%d', validators=[DataRequired()])
+    quantityd_po = IntegerField('quantityd_po', validators=[DataRequired()])
     client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
     submit = SubmitField('Update Client Record')                                                                                                    
