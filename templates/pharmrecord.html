@@ -42,7 +42,7 @@
     <div class="container">
         <div class="spacing-div"></div>
         <div class="d-flex justify-content-center">
-            <h1 class="mb-3">Update Client Record</h1>
+            <h1 class="mb-3">Enter Pharmarcy Record</h1>
         </div>
         <form method="POST">
             {{ form.hidden_tag() }}
@@ -61,36 +61,36 @@
             <div class="spacing-div"></div>
             <div class="spacing-div"></div>
             <div class="form-group">
-                <label for="{{ form.dregimen_po.id }}">Update Drug Regimen Client's Record (Client's Folder)</label>
-                {{ form.dregimen_po(class="form-control") }}
+                <label for="{{ form.dregimen_pw.id }}">Drug Regimen Pharmacy Record</label>
+                {{ form.dregimen_pw(class="form-control") }}
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
-                <label for="{{ form.mrefill_po.id }}">Update Months of Refill Client's Record</label>
-                {{ form.mrefill_po(class="form-control") }}
+                <label for="{{ form.mrefill_pw.id }}">Months of Refill Pharmacy Record</label>
+                {{ form.mrefill_pw(class="form-control") }}
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
-                <label for="{{ form.laspud_po.id }}">Update Last pickup Date Client's Record</label>
-                {{ form.laspud_po(class="form-control") }}
+                <label for="{{ form.laspud_pw.id }}">Last pickup Date Pharmacy Record</label>
+                {{ form.laspud_pw(class="form-control") }}
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
-                <label for="{{ form.quantityd_po.id }}">Update Quantity of Drug Dispenced Client's Record</label>
-                {{ form.quantityd_po(class="form-control") }}
+                <label for="{{ form.quantityd_pw.id }}">Quantity of Drug Dispenced Pharmacy Record</label>
+                {{ form.quantityd_pw(class="form-control") }}
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
-                <label for="{{ form.client_folder.id }}">Client Folder Sighted?</label>
-                {{ form.client_folder() }}
+                <label for="{{ form.pharm_doc.id }}">Pharmacy Record Sighted?</label>
+                {{ form.pharm_doc() }}
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
         <div class="d-flex justify-content-end">
-            <a href="/update_pharm_record" class="btn btn-secondary">Next to Update Pharmacy Record</a>
+            <a href="/client_record" class="btn btn-secondary">Next to Client Record</a>
         </div>
         <div class="d-flex justify-content-near">
-            <a href="/update_record" class="btn btn-secondary">Back to Update Data Entry</a>
+            <a href="/data_entry" class="btn btn-secondary">Back to Data Entry</a>
         </div>
     </div>
     <div class="footer">

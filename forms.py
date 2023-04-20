@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 #from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from utils import validate_email, validate_username, facility_choices, client_choices
 from wtforms_sqlalchemy.fields import QuerySelectField
-from models import DataEntry, User, FacilityNameItem, ClientIdItem, UserIdItem, db
+from models import DataEntry, User, db
 
 class DataEntryForm(FlaskForm):
     facility_name = StringField('Facility Name', validators=[DataRequired(), Length(max=100)])
@@ -86,105 +86,105 @@ class LoginForm(FlaskForm):
 # def client_id_choices():
 #     return ClientIdItem.query
 
-def facility_name_choices():
-    return FacilityNameItem.query.order_by(FacilityNameItem.facility_name)
+# def facility_name_choices():
+#     return FacilityNameItem.query.order_by(FacilityNameItem.facility_name)
 
-def client_id_choices():
-    return ClientIdItem.query.order_by(ClientIdItem.client_id)
+# def client_id_choices():
+#     return ClientIdItem.query.order_by(ClientIdItem.client_id)
 
-class ValidationEntryForm(FlaskForm):
-    # facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
-    # client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
-    # data_element = StringField('Data Element', validators=[DataRequired()])
+# class ValidationEntryForm(FlaskForm):
+#     # facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
+#     # client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
+#     # data_element = StringField('Data Element', validators=[DataRequired()])
 
-    facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
-    client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
+#     facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
+#     client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
 
-    dregimen_po = StringField('dregimen_po')
-    dregimen_pw = StringField('dregimen_pw')
-    laspud_po = StringField('laspud_po')
-    laspud_pw = StringField('laspud_pw')
-    quantityd_po = StringField('quantityd_po')
-    quantityd_pw = StringField('quantityd_pw')
+#     dregimen_po = StringField('dregimen_po')
+#     dregimen_pw = StringField('dregimen_pw')
+#     laspud_po = StringField('laspud_po')
+#     laspud_pw = StringField('laspud_pw')
+#     quantityd_po = StringField('quantityd_po')
+#     quantityd_pw = StringField('quantityd_pw')
 
-    dregimen_po_correct = RadioField('Is dregimen_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
-    dregimen_pw_correct = RadioField('Is dregimen_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
-    laspud_po_correct = RadioField('Is laspud_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
-    laspud_pw_correct = RadioField('Is laspud_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
-    quantityd_po_correct = RadioField('Is quantityd_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
-    quantityd_pw_correct = RadioField('Is quantityd_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+#     dregimen_po_correct = RadioField('Is dregimen_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+#     dregimen_pw_correct = RadioField('Is dregimen_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+#     laspud_po_correct = RadioField('Is laspud_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+#     laspud_pw_correct = RadioField('Is laspud_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+#     quantityd_po_correct = RadioField('Is quantityd_po correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
+#     quantityd_pw_correct = RadioField('Is quantityd_pw correct?', choices=[(True, 'Yes'), (False, 'No')], default=None, coerce=lambda x: x == 'True')
 
-    submit = SubmitField('Submit')
+#     submit = SubmitField('Submit')
 
-    def __init__(self, *args, **kwargs):
-        super(ValidationEntryForm, self).__init__(*args, **kwargs)
-        self.facility.choices = [(facility.id, facility.facility_name) for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
-        self.client_id.choices = [(client_item.id, client_item.client_id) for client_item in ClientIdItem.query.order_by(ClientIdItem.client_id)]
+#     def __init__(self, *args, **kwargs):
+#         super(ValidationEntryForm, self).__init__(*args, **kwargs)
+#         self.facility.choices = [(facility.id, facility.facility_name) for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
+#         self.client_id.choices = [(client_item.id, client_item.client_id) for client_item in ClientIdItem.query.order_by(ClientIdItem.client_id)]
 
 class FacilityClientForm(FlaskForm):
     facility = SelectField('Facility', validators=[DataRequired()], coerce=int)
     client_id = SelectField('Client ID', validators=[DataRequired()], choices=[])
     submit = SubmitField('Submit')
 
-class ValidateRecordForm(FlaskForm):
-    facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
-    client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
+# class ValidateRecordForm(FlaskForm):
+#     facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
+#     client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
 
-    dregimen_po_correct = RadioField('dregimen_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
-    dregimen_pw_correct = RadioField('dregimen_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
-    laspud_po_correct = RadioField('laspud_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
-    laspud_pw_correct = RadioField('laspud_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
-    quantityd_po_correct = RadioField('quantityd_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
-    quantityd_pw_correct = RadioField('quantityd_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+#     dregimen_po_correct = RadioField('dregimen_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+#     dregimen_pw_correct = RadioField('dregimen_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+#     laspud_po_correct = RadioField('laspud_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+#     laspud_pw_correct = RadioField('laspud_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+#     quantityd_po_correct = RadioField('quantityd_po_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+#     quantityd_pw_correct = RadioField('quantityd_pw_correct', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
 
-    submit = SubmitField('Validate Client Record')
+#     submit = SubmitField('Validate Client Record')
 
-    def __init__(self, *args, **kwargs):
-        super(ValidateRecordForm, self).__init__(*args, **kwargs)
-        self.facility.choices = [(facility.id, facility.facility_name) for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
-        self.client_id.choices = [(client_item.id, client_item.client_id) for client_item in ClientIdItem.query.order_by(ClientIdItem.client_id)]
-
-
-class ClientRecordUpdateForm(FlaskForm):
-    facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
-    client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
-
-    dregimen_po = StringField('dregimen_po', validators=[DataRequired()])
-    mrefill_po = IntegerField('mrefill_po', validators=[DataRequired()])
-    laspud_po = DateField('laspud_po', format='%Y-%m-%d', validators=[DataRequired()])
-    quantityd_po = IntegerField('quantityd_po', validators=[DataRequired()])
-    client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
-    submit = SubmitField('Update Client Record')
-
-    def __init__(self, *args, **kwargs):
-        super(ClientRecordUpdateForm, self).__init__(*args, **kwargs)
-        self.facility.choices = [(facility.id, facility.facility_name) for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
-        #self.client_id.choices = [(client_item.id, client_item.client_id) for client_item in ClientIdItem.query.order_by(ClientIdItem.client_id)]
+#     def __init__(self, *args, **kwargs):
+#         super(ValidateRecordForm, self).__init__(*args, **kwargs)
+#         self.facility.choices = [(facility.id, facility.facility_name) for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
+#         self.client_id.choices = [(client_item.id, client_item.client_id) for client_item in ClientIdItem.query.order_by(ClientIdItem.client_id)]
 
 
+# class ClientRecordUpdateForm(FlaskForm):
+#     facility = QuerySelectField('Facility', query_factory=facility_name_choices, get_label='facility_name', allow_blank=True, blank_text='Select a facility', get_pk=lambda x: x.id)
+#     client_id = QuerySelectField('Client ID', query_factory=client_id_choices, get_label='client_id', allow_blank=True, blank_text='Select a client ID', get_pk=lambda x: x.id)
 
-class PharmacyRecordUpdateForm(FlaskForm):
-    facility = SelectField('Facility Name', validators=[DataRequired()])
-    client_id = SelectField('Client ID', validators=[DataRequired()])
+#     dregimen_po = StringField('dregimen_po', validators=[DataRequired()])
+#     mrefill_po = IntegerField('mrefill_po', validators=[DataRequired()])
+#     laspud_po = DateField('laspud_po', format='%Y-%m-%d', validators=[DataRequired()])
+#     quantityd_po = IntegerField('quantityd_po', validators=[DataRequired()])
+#     client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
+#     submit = SubmitField('Update Client Record')
 
-    dregimen_pw = StringField('dregimen_pw', validators=[DataRequired()])
-    mrefill_pw = IntegerField('mrefill_pw', validators=[DataRequired()])
-    laspud_pw = DateField('laspud_pw', format='%Y-%m-%d', validators=[DataRequired()])
-    quantityd_pw = IntegerField('quantityd_pw', validators=[DataRequired()])
-    pharm_doc = RadioField('pharm_doc', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
-    submit = SubmitField('Update Pharmacy Record')
+#     def __init__(self, *args, **kwargs):
+#         super(ClientRecordUpdateForm, self).__init__(*args, **kwargs)
+#         self.facility.choices = [(facility.id, facility.facility_name) for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
+#         #self.client_id.choices = [(client_item.id, client_item.client_id) for client_item in ClientIdItem.query.order_by(ClientIdItem.client_id)]
 
-    def __init__(self, *args, **kwargs):
-        super(PharmacyRecordUpdateForm, self).__init__(*args, **kwargs)
-        self.facility.choices = [facility.facility_name for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
-        self.facility.choices.insert(0, ('', 'Select a facility'))
-        self.client_id.choices = [('', 'Select a client ID')]
 
-    def update_client_id_choices(self, facility_name):
-        if facility_name != '':
-            self.client_id.choices = [client_item.client_id for client_item in DataEntry.query.filter_by(facility_name=facility_name).order_by(DataEntry.client_id)]
-        else:
-            self.client_id.choices = [('', 'Select a client ID')]
+
+# class PharmacyRecordUpdateForm(FlaskForm):
+#     facility = SelectField('Facility Name', validators=[DataRequired()])
+#     client_id = SelectField('Client ID', validators=[DataRequired()])
+
+#     dregimen_pw = StringField('dregimen_pw', validators=[DataRequired()])
+#     mrefill_pw = IntegerField('mrefill_pw', validators=[DataRequired()])
+#     laspud_pw = DateField('laspud_pw', format='%Y-%m-%d', validators=[DataRequired()])
+#     quantityd_pw = IntegerField('quantityd_pw', validators=[DataRequired()])
+#     pharm_doc = RadioField('pharm_doc', choices=[('yes', 'Yes'), ('no', 'No'), ('none', 'None')], default='none')
+#     submit = SubmitField('Update Pharmacy Record')
+
+#     def __init__(self, *args, **kwargs):
+#         super(PharmacyRecordUpdateForm, self).__init__(*args, **kwargs)
+#         self.facility.choices = [facility.facility_name for facility in FacilityNameItem.query.order_by(FacilityNameItem.facility_name)]
+#         self.facility.choices.insert(0, ('', 'Select a facility'))
+#         self.client_id.choices = [('', 'Select a client ID')]
+
+#     def update_client_id_choices(self, facility_name):
+#         if facility_name != '':
+#             self.client_id.choices = [client_item.client_id for client_item in DataEntry.query.filter_by(facility_name=facility_name).order_by(DataEntry.client_id)]
+#         else:
+#             self.client_id.choices = [('', 'Select a client ID')]
 
 
 class FacilityForm(FlaskForm):
@@ -203,9 +203,9 @@ class PhamarcyForm(FlaskForm):
     facility_name = SelectField('Facility Name', choices=[])
     client_id = SelectField('Client ID', choices=[])
 
-    dregimen_p11111w1111111111111 = StringField('dregimen_po', validators=[DataRequired()])
-    mrefill_po = IntegerField('mr111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111efill_po', validators=[DataRequired()])
-    laspud_po = DateField('laspud_po', format='%Y-%m-%d', validators=[DataRequired()])
-    quantityd_po = IntegerField('quantityd_po', validators=[DataRequired()])
-    client_folder = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
+    dregimen_pw = StringField('dregimen_po', validators=[DataRequired()])
+    mrefill_pw = IntegerField('mrefill_po', validators=[DataRequired()])
+    laspud_pw = DateField('laspud_po', format='%Y-%m-%d', validators=[DataRequired()])
+    quantityd_pw = IntegerField('quantityd_po', validators=[DataRequired()])
+    pharm_doc = RadioField('client_folder', choices=[('yes', 'Yes'), ('no', 'No')], default='none')
     submit = SubmitField('Update Client Record')                                                                                                    

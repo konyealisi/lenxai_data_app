@@ -22,9 +22,9 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-from forms import LoginForm, DataEntryForm, ValidationEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, ClientRecordUpdateForm,PharmacyRecordUpdateForm, ValidateRecordForm, FacilityClientForm, FacilityForm, PhamarcyForm
+from forms import LoginForm, DataEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, FacilityClientForm, FacilityForm, PhamarcyForm
 from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr 
-from models import db, User, DataEntry, Facility, FacilityNameItem, ClientIdItem, UserIdItem
+from models import db, User, DataEntry, Facility
 from sqlalchemy.engine.reflection import Inspector
 from flask.cli import AppGroup
 
@@ -53,31 +53,31 @@ app.cli.add_command(user_cli)
 # after it has been created
 migrate = Migrate(app, db)
 
-def populate_tables():
-    facility_names = db.session.query(DataEntry.facility_name).distinct()
-    client_ids = db.session.query(DataEntry.client_id).distinct()
-    user_ids = db.session.query(User.id).distinct()
+# def populate_tables():
+#     facility_names = db.session.query(DataEntry.facility_name).distinct()
+#     client_ids = db.session.query(DataEntry.client_id).distinct()
+#     user_ids = db.session.query(User.id).distinct()
 
-    for facility_name in facility_names:
-        facility_name_item = FacilityNameItem.query.filter_by(facility_name=facility_name[0]).first()
-        if not facility_name_item:
-            new_facility_name_item = FacilityNameItem(facility_name=facility_name[0])
-            db.session.add(new_facility_name_item)
-            db.session.commit()
+#     for facility_name in facility_names:
+#         facility_name_item = FacilityNameItem.query.filter_by(facility_name=facility_name[0]).first()
+#         if not facility_name_item:
+#             new_facility_name_item = FacilityNameItem(facility_name=facility_name[0])
+#             db.session.add(new_facility_name_item)
+#             db.session.commit()
 
-    for client_id in client_ids:
-        client_id_item = ClientIdItem.query.filter_by(client_id=client_id[0]).first()
-        if not client_id_item:
-            new_client_id_item = ClientIdItem(client_id=client_id[0])
-            db.session.add(new_client_id_item)
-            db.session.commit()
+#     for client_id in client_ids:
+#         client_id_item = ClientIdItem.query.filter_by(client_id=client_id[0]).first()
+#         if not client_id_item:
+#             new_client_id_item = ClientIdItem(client_id=client_id[0])
+#             db.session.add(new_client_id_item)
+#             db.session.commit()
 
-    for user_id in user_ids:
-        user_id_item = UserIdItem.query.filter_by(user_id=user_id[0]).first()
-        if not user_id_item:
-            new_user_id_item = UserIdItem(user_id=user_id[0])
-            db.session.add(new_user_id_item)
-            db.session.commit()
+#     for user_id in user_ids:
+#         user_id_item = UserIdItem.query.filter_by(user_id=user_id[0]).first()
+#         if not user_id_item:
+#             new_user_id_item = UserIdItem(user_id=user_id[0])
+#             db.session.add(new_user_id_item)
+#             db.session.commit()
 
 
 
@@ -304,18 +304,27 @@ def download_csv():
     for row in data:
         data_entry = row.DataEntry.to_dict()
         facility = row.Facility.to_dict()
+
+        # Merge the dictionaries and add the 'facility_id' from the Facility table
         merged_data = {**data_entry, **facility}
         data_list.append(merged_data)
 
     # Create a CSV file in memory
     csv_file = StringIO()
-    fieldnames = ['facility_name','facility_id', 'state', 'lga', 'latitude', 'longitude','client_id','client_name','sex','age','tx_age','dregimen_ll','mrefill_ll','laspud_ll','curr_ll',
+    fieldnames = ['facility_name','id', 'state', 'lga', 'latitude', 'longitude','client_id','client_name','sex','age','tx_age','dregimen_ll','mrefill_ll','laspud_ll','curr_ll',
                     'userid_cr','dregimen_po','mrefill_po','laspud_po','quantityd_po','curr_cr','client_folder','dregimen_po_correct','laspud_po_correct','quantityd_po_correct', 
                         'userid_pr','dregimen_pw','mrefill_pw','laspud_pw','quantityd_pw','curr_pr','pharm_doc', 'dregimen_pw_correct','laspud_pw_correct','quantityd_pw_correct']
-    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-    writer.writeheader()
+    
+    # Define user-friendly headers
+    friendly_headers = ['Health Facility', 'Facility ID', 'State', 'LGA', 'Latitude', 'Longitude', 'Client ID', 'Client Name', 'Sex', 'Age', 'Tx Age (months)', 'Drug Regimen NDR', 'Month of Refill NDR', 'LAST Pick Up Date NDR', 'is Current on Tx NDR',
+                        'User ID CR', 'Drug Regimen CR', 'Month of Refill CR', 'LAST Pick Up Date CR', 'Drug Quantity CR', 'is Current on Tx CR', 'Client Folder Sighted?', 'Drug Regimen CR Correct?', 'LAST Pick Up Date CR Correct?', 'Drug Quantity CR Correct?',
+                        'User ID PR', 'Drug Regimen PR', 'Month of Refill PR', 'LAST Pick Up Date PR', 'Drug Quantity PR', 'is Current on Tx PR', 'Pharmacy Documentation Sighted?', 'Drug Regimen PR Correct?', 'LAST Pick Up Date PR Correct?', 'Drug Quantity PR Correct?']
+    
+    writer = csv.DictWriter(csv_file, fieldnames=fieldnames, extrasaction='ignore')
+    writer.writerow(dict(zip(fieldnames, friendly_headers)))
     for row in data_list:
-        writer.writerow(row)
+        filtered_row = {k: v for k, v in row.items() if k not in ['txcurr_cr', 'txcurr_vf', 'txcurr_ndr', 'txcurr_pr', 'facility_id']}
+        writer.writerow(filtered_row)
 
     # Serve the CSV file as a response
     response = Response(
@@ -515,122 +524,6 @@ def fetch_client_record():
 
     return jsonify(None)
 
-# @app.route('/get_client_ids')
-# def get_client_ids():
-#     facility_name = request.args.get('facility_name')
-#     client_items = DataEntry.query.filter_by(facility_name=facility_name).order_by(DataEntry.client_id).all()
-#     client_ids = [{'id': item.id, 'client_id': item.client_id} for item in client_items]
-#     return jsonify(client_ids)
-
-# @app.route('/get_client_ids', methods=['GET'])
-# def get_client_ids():
-#     facility_name = request.args.get('facility_name')
-#     clients = DataEntry.query.filter_by(facility_name=facility_name).all()
-#     client_ids = [{'id': client.id, 'client_id': client.client_id} for client in clients]
-#     return jsonify(client_ids)
-
-
-# @app.route('/update_client_record', methods=['GET', 'POST'])
-# @login_required
-# def update_client_record():
-#     form = ClientRecordUpdateForm()
-
-#     if form.validate_on_submit():
-#         client_id_value = form.client_id.data.client_id
-#         client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
-
-#         if not client_record:
-#             flash('Client record not found.', 'danger')
-#             return redirect(url_for('landing'))
-
-#         client_record.dregimen_po = form.dregimen_po.data
-#         client_record.mrefill_po = form.mrefill_po.data
-#         client_record.laspud_po = form.laspud_po.data
-#         client_record.quantityd_po = form.quantityd_po.data
-#         client_record.client_folder = form.client_folder.data
-#         client_record.userid = current_user.id
-
-#         db.session.commit()
-#         flash('Client record updated successfully.', 'success')
-#         return redirect(url_for('landing'))
-
-#     return render_template('update_client_record.html', form=form)
-
-# @app.route('/update_client_record', methods=['GET', 'POST'])
-# @login_required
-# def update_client_record():
-#     form = ClientRecordUpdateForm()
-
-#     facility_client_form = FacilityClientForm()
-#     facility_client_form.facility.choices = [(f.id, f.facility_name) for f in FacilityNameItem.query.order_by('facility_name')]
-
-#     if request.method == 'POST' and facility_client_form.validate():
-#         selected_facility = FacilityNameItem.query.get(facility_client_form.facility.data)
-#         facility_client_form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
-#         #facility_client_form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
-
-#         if form.validate_on_submit():
-#             client_id_value = form.client_id.data.client_id
-#             client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
-
-#             if not client_record:
-#                 flash('Client record not found.', 'danger')
-#                 return redirect(url_for('landing'))
-
-#             client_record.dregimen_po = form.dregimen_po.data
-#             client_record.mrefill_po = form.mrefill_po.data
-#             client_record.laspud_po = form.laspud_po.data
-#             client_record.quantityd_po = form.quantityd_po.data
-#             client_record.client_folder = form.client_folder.data
-#             client_record.userid = current_user.id
-
-#             db.session.commit()
-#             flash('Client record updated successfully.', 'success')
-#             return redirect(url_for('landing'))
-
-#     return render_template('update_client_record.html', form=form, facility_client_form=facility_client_form)
-
-# @app.route('/facility_client', methods=['GET', 'POST'])
-# def facility_client():
-#     form = FacilityClientForm()
-#     form.facility.choices = [(f.id, f.facility_name) for f in FacilityNameItem.query.order_by('facility_name')]
-    
-#     if form.validate_on_submit():
-#         selected_facility = FacilityNameItem.query.get(form.facility.data)
-#         form.client_id.choices = [(c.id, c.client_id) for c in DataEntry.query.filter_by(facility_name=selected_facility.facility_name).order_by('client_id')]
-#     else:
-#         form.client_id.choices = []
-
-#     return render_template('facility_client.html', form=form)
-
-@app.route('/update_pharm_record', methods=['GET', 'POST'])
-@login_required
-def update_pharm_record():
-    form = PharmacyRecordUpdateForm()
-
-    if request.method == 'POST':
-        form.update_client_id_choices(form.facility.data)
-
-        if form.validate_on_submit():
-            client_id_value = form.client_id.data.client_id
-            client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
-
-            if not client_record:
-                flash('Client record not found.', 'danger')
-                return redirect(url_for('landing'))
-
-            client_record.dregimen_pw = form.dregimen_pw.data
-            client_record.mrefill_pw = form.mrefill_pw.data
-            client_record.laspud_pw = form.laspud_pw.data
-            client_record.quantityd_pw = form.quantityd_pw.data
-            client_record.pharm_doc = form.pharm_doc.data
-            client_record.userid = current_user.id
-
-            db.session.commit()
-            flash('Client record updated successfully.', 'success')
-            return redirect(url_for('landing'))
-
-    return render_template('update_pharm_record.html', form=form)
 
 def po_entry_exists(client_id, laspud_po):
     existing_entry = DataEntry.query.filter_by(client_id=client_id, laspud_po=laspud_po).first()
@@ -673,6 +566,7 @@ def client_record():
     return render_template('facility.html', form=form)
 
 @app.route('/update_client_record', methods=['GET', 'POST'])
+@requires_roles('sysadmin','admin')
 def update_client_record():
     form = FacilityForm(request.form)
     form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
@@ -702,9 +596,9 @@ def update_client_record():
 
     return render_template('update_client_record.html', form=form)
 
-@app.route('/client_record', methods=['GET', 'POST'])
-def client_record():
-    form = FacilityForm(request.form)
+@app.route('/pharm_record', methods=['GET', 'POST'])
+def pharm_record():
+    form = PhamarcyForm(request.form)
     form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
 
     if request.method == 'POST':
@@ -716,19 +610,19 @@ def client_record():
                 flash('Client record not found.', 'danger')
                 return redirect(url_for('landing'))
         
-        if not client_record.dregimen_po:
-            client_record.dregimen_po = form.dregimen_po.data
-        if not client_record.mrefill_po:
-            client_record.mrefill_po = form.mrefill_po.data
-        if not client_record.laspud_po:
-            client_record.laspud_po = form.laspud_po.data
-        if not client_record.quantityd_po:
-            client_record.quantityd_po = form.quantityd_po.data
-        if not client_record.client_folder:
-            client_record.client_folder = form.client_folder.data
+        if not client_record.dregimen_pw:
+            client_record.dregimen_pw = form.dregimen_pw.data
+        if not client_record.mrefill_pw:
+            client_record.mrefill_pw = form.mrefill_pw.data
+        if not client_record.laspud_pw:
+            client_record.laspud_pw = form.laspud_pw.data
+        if not client_record.quantityd_pw:
+            client_record.quantityd_pw = form.quantityd_pw.data
+        if not client_record.pharm_doc:
+            client_record.pharm_doc = form.pharm_doc.data
 
-        client_record.userid_cr = current_user.id
-        client_record.curr_cr = curr(client_record.laspud_po, cutoff, grace_period)
+        client_record.userid_pr = current_user.id
+        client_record.curr_pr = curr(client_record.laspud_pw, cutoff, grace_period)
 
 
         db.session.commit()
@@ -736,11 +630,12 @@ def client_record():
         return redirect(url_for('landing'))
     
 
-    return render_template('facility.html', form=form)
+    return render_template('pharmrecord.html', form=form)
 
-@app.route('/update_client_record', methods=['GET', 'POST'])
-def update_client_record():
-    form = FacilityForm(request.form)
+@app.route('/update_pharm_record', methods=['GET', 'POST'])
+@requires_roles('sysadmin','admin')
+def update_pharm_record():
+    form = PhamarcyForm(request.form)
     form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
 
     if request.method == 'POST':
@@ -752,21 +647,20 @@ def update_client_record():
                 flash('Client record not found.', 'danger')
                 return redirect(url_for('landing'))
         
-        client_record.dregimen_po = form.dregimen_po.data
-        client_record.mrefill_po = form.mrefill_po.data
-        client_record.laspud_po = form.laspud_po.data
-        client_record.quantityd_po = form.quantityd_po.data
-        client_record.client_folder = form.client_folder.data
-        client_record.userid_cr = current_user.id
-        client_record.curr_cr = curr(client_record.laspud_po, cutoff, grace_period)
+        client_record.dregimen_pw = form.dregimen_pw.data
+        client_record.mrefill_pw = form.mrefill_pw.data
+        client_record.laspud_pw = form.laspud_pw.data
+        client_record.quantityd_pw = form.quantityd_pw.data
+        client_record.pharm_doc= form.pharm_doc.data
+        client_record.userid_pr = current_user.id
+        client_record.curr_pr = curr(client_record.laspud_pw, cutoff, grace_period)
 
 
         db.session.commit()
         flash('Client record updated successfully.', 'success')
         return redirect(url_for('landing'))
     
-
-    return render_template('update_client_record.html', form=form)
+    return render_template('update_pharm_record.html', form=form)
 
 @app.route('/get_client_ids')
 def get_client_ids():
@@ -874,7 +768,7 @@ def drop_facility_table():
             print("Dropped table 'facility' successfully.")
         else:
             print("Table not found.")
-# flask drop-user-table
+# flask drop-facility-table
 
 @app.cli.command('drop-user_id_item-table')
 #@requires_roles('sysadmin')
@@ -900,7 +794,5 @@ def inject_current_year():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        # Call the function to populate the tables
-        populate_tables()
     app.run(debug=True)
     #app.run(host='192.168.0.9', port=5000)

@@ -1,57 +1,124 @@
-{% extends "base.html" %}
-
-{% block extra_css %}
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css">
-{% endblock %}
-
-{% block content %}
-    <div class="d-flex justify-content-center">
-        <h1 class="mb-3">Update Pharmacy Record</h1>
-    </div>
-    <form method="POST" action="{{ url_for('update_pharm_record', client_id=client_id, facility_name=facility_name) }}">
-        {{ form.hidden_tag() }}
-        <table>
-            <!-- Other table rows here -->
-            <tr>
-                <th>Facility</th>
-                <td>{{ form.facility(class="selectpicker", data_live_search="true") }}</td>
-            </tr>
-            <tr>
-                <th>Client ID</th>
-                <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
-            </tr>
-            <!-- Other table rows here -->
-        </table>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LenxAI - Nigeria DQA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css">
+    <style>
+        body {
+            background-color: black;
+            color: white;
+        }
+        .container {
+            width: 90%;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .form-control,
+        .btn {
+            background-color: #343a40;
+            color: white;
+        }
+        .spacing-div {
+            margin: 1rem 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    
+    {% include "navbar.html" %}
+    
+    <div class="container">
         <div class="spacing-div"></div>
-        <div class="spacing-div"></div>
-        <div class="form-group">
-            <label for="{{ form.dregimen_pw.id }}">Current drug regimen</label>
-            {{ form.dregimen_pw(class="form-control") }}
+        <div class="d-flex justify-content-center">
+            <h1 class="mb-3">Update Pharmacy Record</h1>
         </div>
-        <div class="form-group">
-            <label for="{{ form.mrefill_pw.id }}">Months of Refill</label>
-            {{ form.mrefill_pw(class="form-control") }}
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <table>
+                <!-- Other table rows here -->
+                <tr>
+                    <th>Facility</th>
+                    <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
+                </tr>
+                <tr>
+                    <th>Client ID</th>
+                    <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
+                </tr>
+                <!-- Other table rows here -->
+            </table>
+            <div class="spacing-div"></div>
+            <div class="spacing-div"></div>
+            <div class="form-group">
+                <label for="{{ form.dregimen_pw.id }}">Update Drug Regimen Pharmacy Record</label>
+                {{ form.dregimen_pw(class="form-control") }}
+            </div>
+            <div class="spacing-div"></div>
+            <div class="form-group">
+                <label for="{{ form.mrefill_pw.id }}">Update Months of Refill Pharmacy Record</label>
+                {{ form.mrefill_pw(class="form-control") }}
+            </div>
+            <div class="spacing-div"></div>
+            <div class="form-group">
+                <label for="{{ form.laspud_pw.id }}">Update Last pickup Date Pharmacy Record</label>
+                {{ form.laspud_pw(class="form-control") }}
+            </div>
+            <div class="spacing-div"></div>
+            <div class="form-group">
+                <label for="{{ form.quantityd_pw.id }}">Update Quantity of Drug Dispenced Pharmacy Record</label>
+                {{ form.quantityd_pw(class="form-control") }}
+            </div>
+            <div class="spacing-div"></div>
+            <div class="form-group">
+                <label for="{{ form.pharm_doc.id }}">Pharmacy Sighted?</label>
+                {{ form.pharm_doc() }}
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <div class="d-flex justify-content-end">
+            <a href="/update_client_record" class="btn btn-secondary">Next to Update Client Record</a>
         </div>
-        <div class="form-group">
-            <label for="{{ form.laspud_pw.id }}">Last pickup date</label>
-            {{ form.laspud_pw(class="form-control") }}
+        <div class="d-flex justify-content-near">
+            <a href="/update_record" class="btn btn-secondary">Back to Update Data Entry</a>
         </div>
-        <div class="form-group">
-            <label for="{{ form.quantityd_pw.id }}">Quantity of drug dispenced to client</label>
-            {{ form.quantityd_pw(class="form-control")}}
-        </div>
-        <div class="form-group">
-            <label for="{{ form.pharm_doc.id }}">Pharmacy documentation found?</label>
-            {{ form.pharm_doc() }}
-        </div>
-        <button type="submit" class="btn btn-primary">Update Pharmacy Record</button>
-    </form>
-    <div class="d-flex justify-content-end">
-        <a href="/data_entry" class="btn btn-secondary">Back to Data Entry</a>
     </div>
-{% endblock %}
+    <div class="footer">
+        <p>&copy; {{ current_year }} LenxAI. All rights reserved.</p>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta2/dist/js/bootstrap-select.min.js"></script>
 
-{% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
-{% endblock %}
+    <script>
+        $('select[name="facility_name"]').change(function() {
+            let facilityName = $(this).val();
+            $.getJSON('/get_client_ids', {
+                facility_name: facilityName
+            }, function(data) {
+                let clientIdSelect = $('select[name="client_id"]');
+                clientIdSelect.empty();
+                $.each(data, function(index, client) {
+                    clientIdSelect.append(
+                        $('<option></option>').attr('value', client[0]).text(client[1])
+                        );
+                    });
+                    clientIdSelect.selectpicker('refresh');
+                });
+            });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
+</body>
+</html>
+

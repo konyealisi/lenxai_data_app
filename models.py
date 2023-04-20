@@ -89,9 +89,9 @@ class User(db.Model, UserMixin):
 #     def __init__(self, user_id):
 #         self.user_id = user_id
 
-class FacilityNameItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    facility_name = db.Column(db.String(128), unique=True)
+# class FacilityNameItem(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     facility_name = db.Column(db.String(128), unique=True)
 
 class Facility(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -112,11 +112,11 @@ class Facility(db.Model):
 
 
 
-class ClientIdItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.String(128), unique=True)
+# class ClientIdItem(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     client_id = db.Column(db.String(128), unique=True)
 
-class UserIdItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, unique=True)
+# class UserIdItem(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     user_id = db.Column(db.Integer, unique=True)
 
