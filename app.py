@@ -22,7 +22,7 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-from forms import LoginForm, DataEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, FacilityClientForm, FacilityForm, PhamarcyForm
+from forms import LoginForm, DataEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, FacilityClientForm, FacilityForm, PhamarcyForm, ValidateRecordForm
 from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr 
 from models import db, User, DataEntry, Facility, update_all_facilities#, update_all_facilities_txcurr_pr, update_all_facilities_txcurr_cr, update_all_facilities_txcurr_ndr, update_all_facilities_txcurr_vf
 from sqlalchemy.engine.reflection import Inspector
