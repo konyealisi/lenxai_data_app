@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 
 import csv
 import os
-
+import subprocess
 import re
 
 from sqlalchemy import text, create_engine, inspect
@@ -24,7 +24,7 @@ from functools import wraps
 
 from forms import LoginForm, DataEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, FacilityClientForm, FacilityForm, PhamarcyForm
 from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr 
-from models import db, User, DataEntry, Facility
+from models import db, User, DataEntry, Facility, update_all_facilities#, update_all_facilities_txcurr_pr, update_all_facilities_txcurr_cr, update_all_facilities_txcurr_ndr, update_all_facilities_txcurr_vf
 from sqlalchemy.engine.reflection import Inspector
 from flask.cli import AppGroup
 
@@ -52,33 +52,6 @@ app.cli.add_command(user_cli)
 # this is used to modify the database schema 
 # after it has been created
 migrate = Migrate(app, db)
-
-# def populate_tables():
-#     facility_names = db.session.query(DataEntry.facility_name).distinct()
-#     client_ids = db.session.query(DataEntry.client_id).distinct()
-#     user_ids = db.session.query(User.id).distinct()
-
-#     for facility_name in facility_names:
-#         facility_name_item = FacilityNameItem.query.filter_by(facility_name=facility_name[0]).first()
-#         if not facility_name_item:
-#             new_facility_name_item = FacilityNameItem(facility_name=facility_name[0])
-#             db.session.add(new_facility_name_item)
-#             db.session.commit()
-
-#     for client_id in client_ids:
-#         client_id_item = ClientIdItem.query.filter_by(client_id=client_id[0]).first()
-#         if not client_id_item:
-#             new_client_id_item = ClientIdItem(client_id=client_id[0])
-#             db.session.add(new_client_id_item)
-#             db.session.commit()
-
-#     for user_id in user_ids:
-#         user_id_item = UserIdItem.query.filter_by(user_id=user_id[0]).first()
-#         if not user_id_item:
-#             new_user_id_item = UserIdItem(user_id=user_id[0])
-#             db.session.add(new_user_id_item)
-#             db.session.commit()
-
 
 
 def requires_roles(*roles):
@@ -198,11 +171,6 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
-# # Home route
-# @app.route("/")
-# def home():
-#     return render_template("index.html")
-
 # register route - for creating new user by authorized user - sysadmin, admin, and superuser
 @app.route('/register', methods=['GET', 'POST'])
 @requires_roles('sysadmin','admin', 'superuser')
@@ -265,33 +233,6 @@ def logout():
 def download():
     return render_template("download.html")
 
-# Download_csv route - let authorized user (sysadmin, admin, superuser) download 
-# data entered and stored by the platform
-# @app.route('/download_csv', methods=['GET'])
-# @requires_roles('sysadmin', 'admin', 'superuser')
-# def download_csv():
-#     # Query data from the database
-#     data = DataEntry.query.all()
-
-#     # Convert data to a list of dictionaries
-#     data_list = [row.to_dict() for row in data]
-
-#     # Create a CSV file in memory
-#     csv_file = StringIO()
-#     fieldnames = ['userid_cr','facility_name','facility_id','geolocation','client_id','client_name','age','sex','dregimen_ll','tx_age','dregimen_po','dregimen_pw','mrefill_ll','mrefill_po','mrefill_pw','laspud_ll','laspud_po','laspud_pw','curr_ll','curr_cr','curr_pr','quantityd_po','quantityd_pw','client_folder', 'laspud_pw_correct', 'dregimen_po_correct', 'quantityd_pw_correct', 'dregimen_pw_correct', 'pharm_doc', 'laspud_po_correct', 'quantityd_po_correct']  # Replace with your actual column names
-#     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-#     writer.writeheader()
-#     for row in data_list:
-#         writer.writerow(row)
-
-#     # Serve the CSV file as a response
-#     response = Response(
-#         csv_file.getvalue(),
-#         mimetype='text/csv',
-#         headers={'Content-Disposition': 'attachment;filename=data.csv'}
-#     )
-
-#     return response
 
 @app.route('/download_csv', methods=['GET'])
 @requires_roles('sysadmin', 'admin', 'superuser')
@@ -399,9 +340,17 @@ def upload_file():
             
             #clean data 
             df = clean_dataframe(df)
+            
+            # If 'last_pickup_date' is na, fill it with the corresponding 'art_start_date'
+            df['last_pickup_date'] = df['last_pickup_date'].fillna(df['art_start_date'])
+
+            # convert to datetime.
             df['date_of_birth'] = pd.to_datetime(df['date_of_birth'], dayfirst=True)
             df['art_start_date'] = pd.to_datetime(df['art_start_date'], dayfirst=True)
             df['last_pickup_date'] = pd.to_datetime(df['last_pickup_date'], dayfirst=True)
+
+            df['months_of_arv_refill'] = df['months_of_arv_refill'].fillna(1)
+            df['current_art_regimen'] = df['current_art_regimen'].fillna('TDF-3TC-DTG')
             
             df['age'] = df.apply(lambda row: calculate_age(row['date_of_birth'], row['last_pickup_date']), axis=1)
             df['tx_age'] = df.apply(lambda row: calculate_age_in_months(row['art_start_date'], row['last_pickup_date']), axis=1)
@@ -530,6 +479,7 @@ def po_entry_exists(client_id, laspud_po):
     return existing_entry is not None
 
 @app.route('/client_record', methods=['GET', 'POST'])
+@requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dataentrant')
 def client_record():
     form = FacilityForm(request.form)
     form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
@@ -597,6 +547,7 @@ def update_client_record():
     return render_template('update_client_record.html', form=form)
 
 @app.route('/pharm_record', methods=['GET', 'POST'])
+@requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dataentrant')
 def pharm_record():
     form = PhamarcyForm(request.form)
     form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
@@ -790,9 +741,23 @@ def drop_data_user_id_table():
 def inject_current_year():
     return {'current_year': datetime.utcnow().year}
 
+@app.route('/dashboard_app')
+@requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dashboard')
+def dashboard_app():
+    cmd = "streamlit run dashboard_app.py"
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    process.terminate()
+    return redirect("http://localhost:8501")
+
+
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        # update_all_facilities_txcurr_pr()
+        # update_all_facilities_txcurr_cr()
+        # update_all_facilities_txcurr_ndr()
+        # update_all_facilities_txcurr_vf()
+        update_all_facilities()
     app.run(debug=True)
     #app.run(host='192.168.0.9', port=5000)

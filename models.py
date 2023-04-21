@@ -4,8 +4,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import os
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Numeric, ForeignKey, ForeignKeyConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy import Numeric, ForeignKey, Column, Integer, String, Date, Boolean
+from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy import event
 
 db_user = os.environ.get('DB_USER_ndqadata')
 db_password = os.environ.get('DB_PASSWORD_ndqadata')
@@ -55,9 +56,7 @@ class DataEntry(db.Model):
     pharm_doc = db.Column(db.String(5), nullable=True)
     client_folder = db.Column(db.String(5), nullable=True)
 
-    # def __repr__(self):
-    #     return f'<DataEntry {self.first_name} {self.last_name}>'
-
+   
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
@@ -77,22 +76,6 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
-# class FacilityNameItem:
-#     def __init__(self, facility_name):
-#         self.facility_name = facility_name
-
-# class ClientIdItem:
-#     def __init__(self, client_id):
-#         self.client_id = client_id
-
-# class UserIdItem:
-#     def __init__(self, user_id):
-#         self.user_id = user_id
-
-# class FacilityNameItem(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     facility_name = db.Column(db.String(128), unique=True)
-
 class Facility(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     facility_name = db.Column(db.String(128), nullable=False, unique=True)
@@ -110,13 +93,178 @@ class Facility(db.Model):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
+def update_facility_after_data_entry_change(mapper, connection, target):
+    # Retrieve the facility related to the changed data_entry
+    facility = target.facility
+
+    # Calculate the sum of the count of 'yes' for curr_ll in data_entry table for the facility
+    Session = sessionmaker(bind=connection)
+    session = Session()
+    txcurr_ndr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_ll == 'yes').count()
+    txcurr_cr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_cr == 'yes').count()
+    txcurr_pr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_pr == 'yes').count()
+
+    txcurr_ndr_vf = session.query(DataEntry).filter(
+        DataEntry.facility_name == facility.facility_name, 
+        DataEntry.curr_ll == 'yes', 
+        DataEntry.curr_cr != None
+    ).count()
+    txcurr_cr_vf = session.query(DataEntry).filter(
+        DataEntry.facility_name == facility.facility_name, 
+        DataEntry.curr_ll != None, 
+        DataEntry.curr_cr == 'yes'
+    ).count()
+
+    # Calculate txcur_vf as txcurr_cr/txcurr_ndr to 2 decimal places
+    if txcurr_ndr_vf != 0:
+        txcur_vf = round(txcurr_cr_vf / txcurr_ndr_vf, 2)
+    else:
+        txcur_vf = None
+
+    # Update the txcurr_ndr in the facility table
+    facility.txcurr_ndr = txcurr_ndr
+    facility.txcurr_cr = txcurr_cr
+    facility.txcurr_pr = txcurr_pr
+    facility.txcur_vf = txcur_vf
+
+    # Commit the changes to the database
+    session.add(facility)
+    session.commit()
+
+# Add event listeners
+event.listen(DataEntry, 'after_insert', update_facility_after_data_entry_change)
+event.listen(DataEntry, 'after_update', update_facility_after_data_entry_change)
+event.listen(DataEntry, 'after_delete', update_facility_after_data_entry_change)
+
+#
+
+# def update_all_facilities_txcurr_ndr():
+#     # Get all the facilities
+#     facilities = Facility.query.all()
+
+#     for facility in facilities:
+#         # Calculate the sum of the count of 'yes' for curr_ll in data_entry table for the facility
+#         txcurr_ndr = DataEntry.query.filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_ll == 'yes').count()
+
+#         # Update the txcurr_ndr in the facility table
+#         facility.txcurr_ndr = txcurr_ndr
+
+#     # Commit the changes to the database
+#     db.session.commit()
 
 
-# class ClientIdItem(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     client_id = db.Column(db.String(128), unique=True)
+# def update_all_facilities_txcurr_cr():
+#     # Get all the facilities
+#     facilities = Facility.query.all()
 
-# class UserIdItem(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     user_id = db.Column(db.Integer, unique=True)
+#     for facility in facilities:
+#         # Calculate the sum of the count of 'yes' for curr_ll in data_entry table for the facility
+#         txcurr_cr = DataEntry.query.filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_cr == 'yes').count()
+
+#         # Update the txcurr_ndr in the facility table
+#         facility.txcurr_cr = txcurr_cr
+
+#     # Commit the changes to the database
+#     db.session.commit()
+
+# def update_all_facilities_txcurr_pr():
+#     # Get all the facilities
+#     facilities = Facility.query.all()
+
+#     for facility in facilities:
+#         # Calculate the sum of the count of 'yes' for curr_ll in data_entry table for the facility
+#         txcurr_pr = DataEntry.query.filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_pr == 'yes').count()
+
+#         # Update the txcurr_ndr in the facility table
+#         facility.txcurr_pr = txcurr_pr
+
+#     # Commit the changes to the database
+#     db.session.commit()
+
+# def update_all_facilities_txcurr_vf():
+#     # Get all facilities
+#     facilities = Facility.query.all()
+
+#     # Loop through each facility and update txcurr_ndr, txcurr_cr, and txcur_vf
+#     for facility in facilities:
+#         txcurr_ndr_vf = DataEntry.query.filter(
+#             DataEntry.facility_name == facility.facility_name, 
+#             DataEntry.curr_ll == 'yes', 
+#             DataEntry.curr_cr != None
+#         ).count()
+#         txcurr_cr_vf = DataEntry.query.filter(
+#             DataEntry.facility_name == facility.facility_name, 
+#             DataEntry.curr_ll != None, 
+#             DataEntry.curr_cr == 'yes'
+#         ).count()
+
+#         if txcurr_ndr_vf != 0:
+#             txcur_vf = round(txcurr_cr_vf / txcurr_ndr_vf, 2)
+#         else:
+#             txcur_vf = None
+#         #txcur_vf = round(txcurr_cr / txcurr_ndr, 2)
+
+#         # Update the txcurr_ndr, txcurr_cr, and txcur_vf in the facility table
+#         # facility.txcurr_ndr = txcurr_ndr
+#         # facility.txcurr_cr = txcurr_cr
+#         facility.txcur_vf = txcur_vf
+
+#         # Commit the changes to the database
+#         db.session.add(facility)
+
+#     db.session.commit()
+
+def update_all_facilities():
+    # Get all facilities
+    facilities = Facility.query.all()
+
+    # Loop through each facility and update txcurr_ndr, txcurr_cr, txcurr_pr, and txcur_vf
+    for facility in facilities:
+        txcurr_ndr = DataEntry.query.filter(
+            DataEntry.facility_name == facility.facility_name,
+            DataEntry.curr_ll == 'yes'
+        ).count()
+
+        txcurr_cr = DataEntry.query.filter(
+            DataEntry.facility_name == facility.facility_name,
+            DataEntry.curr_cr == 'yes'
+        ).count()
+
+        txcurr_pr = DataEntry.query.filter(
+            DataEntry.facility_name == facility.facility_name,
+            DataEntry.curr_pr == 'yes'
+        ).count()
+
+        txcurr_ndr_vf = DataEntry.query.filter(
+            DataEntry.facility_name == facility.facility_name,
+            DataEntry.curr_ll == 'yes',
+            DataEntry.curr_cr != None
+        ).count()
+
+        txcurr_cr_vf = DataEntry.query.filter(
+            DataEntry.facility_name == facility.facility_name,
+            DataEntry.curr_ll != None,
+            DataEntry.curr_cr == 'yes'
+        ).count()
+
+        if txcurr_ndr_vf != 0:
+            txcur_vf = round(txcurr_cr_vf / txcurr_ndr_vf, 2)
+        else:
+            txcur_vf = None
+
+        # Update the txcurr_ndr, txcurr_cr, txcurr_pr, and txcur_vf in the facility table
+        facility.txcurr_ndr = txcurr_ndr
+        facility.txcurr_cr = txcurr_cr
+        facility.txcurr_pr = txcurr_pr
+        facility.txcur_vf = txcur_vf
+
+        # Commit the changes to the database
+        db.session.add(facility)
+
+    db.session.commit()
+
+# Call the function to update all facilities
+#update_all_facilities()
+
+
 

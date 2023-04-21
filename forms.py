@@ -36,7 +36,7 @@ class RegistrationFormAdmin(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email(), validate_email])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('admin', 'Admin'), ('superuser', 'Superuser'), ('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant')], validators=[DataRequired()])
+    role = SelectField('Role', choices=[('admin', 'Admin'), ('superuser', 'Superuser'), ('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant'), ('dashboard', 'Dashboard Viewer')], validators=[DataRequired()])
     submit = SubmitField('Sign Up')
 
 # Registration form - Superuser: this is the form for registering new users by a superuser
@@ -46,7 +46,7 @@ class RegistrationFormSuperuser(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email(), validate_email])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant')], validators=[DataRequired()])
+    role = SelectField('Role', choices=[('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant'), ('dashboard', 'Dashboard Viewer')], validators=[DataRequired()])
     submit = SubmitField('Sign Up')
 
 
