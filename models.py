@@ -249,17 +249,18 @@ def update_all_facilities():
         #     DataEntry.curr_cr == 'yes'
         # ).count()
 
-        txcurr_ndr_vf = DataEntry.query(DataEntry).filter(
+        txcurr_ndr_vf = DataEntry.query.filter(
             DataEntry.facility_name == facility.facility_name,
             DataEntry.curr_ll == 'yes',
-            DataEntry.curr_cr.isnot(None)  # Use the .isnot() method instead of !=
+            DataEntry.curr_cr.isnot(None)
         ).count()
 
-        txcurr_cr_vf = DataEntry.query(DataEntry).filter(
+        txcurr_cr_vf = DataEntry.query.filter(
             DataEntry.facility_name == facility.facility_name,
-            DataEntry.curr_ll.isnot(None),  # Use the .isnot() method instead of !=
+            DataEntry.curr_ll.isnot(None),
             DataEntry.curr_cr == 'yes'
         ).count()
+
 
         if txcurr_ndr_vf != 0:
             txcur_vf = round(txcurr_cr_vf / txcurr_ndr_vf, 2)

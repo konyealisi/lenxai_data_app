@@ -23,7 +23,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 
 from forms import LoginForm, DataEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, FacilityClientForm, FacilityForm, PhamarcyForm#, ValidateRecordForm
-from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr 
+from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr, get_facility_names
 from models import db, User, DataEntry, Facility, update_all_facilities#, update_all_facilities_txcurr_pr, update_all_facilities_txcurr_cr, update_all_facilities_txcurr_ndr, update_all_facilities_txcurr_vf
 from sqlalchemy.engine.reflection import Inspector
 from flask.cli import AppGroup
@@ -298,6 +298,13 @@ def validate_entry():
 def update_record():
     return render_template("updaterecord.html")
 
+
+
+# @app.route("/upload")
+# @requires_roles('sysadmin','admin')
+# def upload():
+#     return render_template("upload.html")
+
 # Ensure the UPLOAD_FOLDER exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
@@ -306,9 +313,74 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 cutoff = date(year=2022, month=6, day=30)
 grace_period = 28
 
-@app.route('/upload', methods=['GET', 'POST'])
+@app.route("/upload_facility")
 @requires_roles('sysadmin','admin')
-def upload_file():
+def upload_facility():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part', 'danger')
+            return redirect(request.url)
+        file = request.files['file']
+        # if user does not select file, browser also
+        # submits an empty part without filename
+        if file.filename == '':
+            flash('No selected file', 'danger')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+            # Read the file and process the data
+            if filename.endswith('.csv'):
+                df = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            elif filename.endswith('.xls') or filename.endswith('.xlsx'):
+                df = pd.read_excel(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            elif filename.endswith('.json'):
+                df = pd.read_json(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            elif filename.endswith('.xml'):
+                df = pd.read_xml(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            
+            # Remove text within brackets (including the brackets) and question marks from column names
+            df.columns = df.columns.str.replace(r'\s*[\(\[].*?[\)\]]|\?', '', regex=True)
+            
+            #clean data 
+            df = clean_dataframe(df)
+
+            # Process the data and save it to the database
+            facility_mapping = {
+                'facility': 'facility_name',
+                'state': 'state',
+                'lga': 'lga',
+                'lat': 'latitude',
+                'long': 'longitude'
+                
+            }
+
+
+            # Process the data and save it to the database -Facility table
+            for index, row in df.iterrows():
+                fac_data = {}
+                for file_col, data_entry_col in facility_mapping.items():
+                    if file_col in df.columns:  # Check if the file_col exists in the DataFrame
+                        fac_data[data_entry_col] = row[file_col]
+                    else:
+                        fac_data[data_entry_col] = None  # Assign a default value (e.g., None) if the file_col is missing
+                if not facility_exists(fac_data['facility_name']):
+                    new_entry = Facility(**fac_data)
+                    db.session.add(new_entry)
+                    db.session.commit()
+
+            
+
+            flash('Data uploaded successfully!', 'success')
+            return redirect(url_for('upload'))
+    return render_template("uploadfacility.html")
+
+
+@app.route('/upload_data', methods=['GET', 'POST'])
+@requires_roles('sysadmin','admin')
+def upload_data():
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
@@ -359,7 +431,30 @@ def upload_file():
             #df['next'] = df['last_pickup_date'] + pd.to_timedelta(df['months_of_arv_refill'] * 30, unit='days')
 
             df['curr_ll'] = df.apply(lambda row: curr(row['last_pickup_date'], row['months_of_arv_refill'], cutoff, grace_period), axis=1)
+        
 
+            # Retrieve the list of facility names from the Facility table
+            existing_facilities = get_facility_names()
+
+            # If the list of existing facilities is empty, prompt the user to upload facility data first
+            if not existing_facilities:
+                flash('No facilities found. Please upload facility data first.', 'warning')
+                return redirect(url_for('upload_facility'))
+
+            # Find the unique facilities in the DataFrame
+            unique_facilities_in_df = df['facility'].unique()
+
+            # Find the missing facilities
+            missing_facilities = list(set(unique_facilities_in_df) - set(existing_facilities))
+
+            # If there are any missing facilities, prompt the user to upload the missing facility data first
+            if missing_facilities:
+                missing_facilities_str = ', '.join(missing_facilities)
+                flash(f'Missing facilities found: {missing_facilities_str}. Please upload the missing facility data first.', 'warning')
+                return redirect(url_for('upload_facility'))
+
+            # Filter the DataFrame to only include records with matching facility names
+            df = df[df['facility'].isin(existing_facilities)]
 
 
             # Process the data and save it to the database
@@ -377,30 +472,6 @@ def upload_file():
             }
 
             
-            # Process the data and save it to the database
-            facility_mapping = {
-                'facility': 'facility_name',
-                'state': 'state',
-                'lga': 'lga',
-                'lat': 'latitude',
-                'long': 'longitude'
-                
-            }
-
-
-            # Process the data and save it to the database -Facility table
-            for index, row in df.iterrows():
-                fac_data = {}
-                for file_col, data_entry_col in facility_mapping.items():
-                    if file_col in df.columns:  # Check if the file_col exists in the DataFrame
-                        fac_data[data_entry_col] = row[file_col]
-                    else:
-                        fac_data[data_entry_col] = None  # Assign a default value (e.g., None) if the file_col is missing
-                if not facility_exists(fac_data['facility_name']):
-                    new_entry = Facility(**fac_data)
-                    db.session.add(new_entry)
-                    db.session.commit()
-            
             # Process the data and save it to the database -DataEntry table
             for index, row in df.iterrows():
                 entry_data = {}
@@ -417,8 +488,15 @@ def upload_file():
             
 
             flash('Data uploaded successfully!', 'success')
-            return redirect(url_for('landing'))
-    return render_template('upload.html')
+            return redirect(url_for('upload'))
+    return render_template('uploaddata.html')
+
+
+# @app.route("/upload_data_fac")
+# @requires_roles('sysadmin','admin')
+# def upload_data_fac():
+#     pass
+#     return 'still under dev'#render_template("upload_data_fac.html")
 
 # @app.route('/validate_client_record', methods=['GET', 'POST'])
 # @app.route('/validate_client_record/<int:client_id>/<string:facility_name>', methods=['GET', 'POST'])

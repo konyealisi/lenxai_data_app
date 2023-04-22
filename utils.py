@@ -86,3 +86,7 @@ def curr(last_pickup_date, months_of_arv_refill, cutoff, grace_period):
         return "No"
 
 
+def get_facility_names():
+    facilities = Facility.query.with_entities(Facility.facility_name).all()
+    facility_names = [facility.facility_name for facility in facilities]
+    return facility_names
