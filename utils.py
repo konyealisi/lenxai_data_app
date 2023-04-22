@@ -64,11 +64,25 @@ def facility_exists(facility_name):
     existing_facility = Facility.query.filter_by(facility_name=facility_name).first()
     return existing_facility is not None
 
-def curr(last_pickup_date, cutoff, grace_period):
+# def curr(last_pickup_date, cutoff, grace_period):
+#     grace_period_timedelta = timedelta(days=grace_period)
+#     if last_pickup_date + grace_period_timedelta >= cutoff:
+#         return 'yes'
+#     else:
+#         return 'no'
+    
+def curr(last_pickup_date, months_of_arv_refill, cutoff, grace_period):
+    if last_pickup_date is None:
+        return None  # or any default value you want to return when last_pickup_date is None
+
+    qdrugs = months_of_arv_refill*30
+    months_of_arv_refill_t = timedelta(days=qdrugs)
+
     grace_period_timedelta = timedelta(days=grace_period)
-    if last_pickup_date + grace_period_timedelta >= cutoff:
-        return 'yes'
+
+    if last_pickup_date + months_of_arv_refill_t + grace_period_timedelta >= cutoff:
+        return "Yes"
     else:
-        return 'no'
+        return "No"
 
 

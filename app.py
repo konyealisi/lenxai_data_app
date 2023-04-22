@@ -22,7 +22,7 @@ import pandas as pd
 from werkzeug.utils import secure_filename
 from functools import wraps
 
-from forms import LoginForm, DataEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, FacilityClientForm, FacilityForm, PhamarcyForm, ValidateRecordForm
+from forms import LoginForm, DataEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, FacilityClientForm, FacilityForm, PhamarcyForm#, ValidateRecordForm
 from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr 
 from models import db, User, DataEntry, Facility, update_all_facilities#, update_all_facilities_txcurr_pr, update_all_facilities_txcurr_cr, update_all_facilities_txcurr_ndr, update_all_facilities_txcurr_vf
 from sqlalchemy.engine.reflection import Inspector
@@ -355,7 +355,10 @@ def upload_file():
             df['age'] = df.apply(lambda row: calculate_age(row['date_of_birth'], row['last_pickup_date']), axis=1)
             df['tx_age'] = df.apply(lambda row: calculate_age_in_months(row['art_start_date'], row['last_pickup_date']), axis=1)
             #df['curr_ll'] = df.apply(lambda row: curr(row['last_pickup_date'], row['cutoff'], row['grace_period']), axis=1)
-            df['curr_ll'] = df.apply(lambda row: curr(row['last_pickup_date'], cutoff, grace_period), axis=1)
+
+            #df['next'] = df['last_pickup_date'] + pd.to_timedelta(df['months_of_arv_refill'] * 30, unit='days')
+
+            df['curr_ll'] = df.apply(lambda row: curr(row['last_pickup_date'], row['months_of_arv_refill'], cutoff, grace_period), axis=1)
 
 
 
@@ -417,39 +420,39 @@ def upload_file():
             return redirect(url_for('landing'))
     return render_template('upload.html')
 
-@app.route('/validate_client_record', methods=['GET', 'POST'])
-@app.route('/validate_client_record/<int:client_id>/<string:facility_name>', methods=['GET', 'POST'])
-@login_required
-def validate_client_record(client_id=None, facility_name=None):
-    form = ValidateRecordForm()
+# @app.route('/validate_client_record', methods=['GET', 'POST'])
+# @app.route('/validate_client_record/<int:client_id>/<string:facility_name>', methods=['GET', 'POST'])
+# @login_required
+# def validate_client_record(client_id=None, facility_name=None):
+#     form = ValidateRecordForm()
 
-    if form.validate_on_submit():
-        client_id_value = form.client_id.data.client_id
-        client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
+#     if form.validate_on_submit():
+#         client_id_value = form.client_id.data.client_id
+#         client_record = DataEntry.query.filter_by(client_id=client_id_value, facility_name=form.facility.data.facility_name).first()
 
-        if not client_record:
-            flash('Client record not found.', 'danger')
-            return redirect(url_for('landing'))
+#         if not client_record:
+#             flash('Client record not found.', 'danger')
+#             return redirect(url_for('landing'))
 
-        client_record.dregimen_po_correct = form.dregimen_po_correct.data
-        client_record.dregimen_pw_correct = form.dregimen_pw_correct.data
-        client_record.laspud_po_correct = form.laspud_po_correct.data
-        client_record.laspud_pw_correct = form.laspud_pw_correct.data
-        client_record.quantityd_po_correct = form.quantityd_po_correct.data
-        client_record.quantityd_pw_correct = form.quantityd_pw_correct.data
+#         client_record.dregimen_po_correct = form.dregimen_po_correct.data
+#         client_record.dregimen_pw_correct = form.dregimen_pw_correct.data
+#         client_record.laspud_po_correct = form.laspud_po_correct.data
+#         client_record.laspud_pw_correct = form.laspud_pw_correct.data
+#         client_record.quantityd_po_correct = form.quantityd_po_correct.data
+#         client_record.quantityd_pw_correct = form.quantityd_pw_correct.data
 
-        db.session.commit()
-        flash('Client record validated successfully.', 'success')
-        return redirect(url_for('landing'))
-    ##new start
-    if client_id and facility_name:
-        client_record = DataEntry.query.filter_by(client_id=client_id, facility_name=facility_name).first()
-    else:
-        client_record = None
+#         db.session.commit()
+#         flash('Client record validated successfully.', 'success')
+#         return redirect(url_for('landing'))
+#     ##new start
+#     if client_id and facility_name:
+#         client_record = DataEntry.query.filter_by(client_id=client_id, facility_name=facility_name).first()
+#     else:
+#         client_record = None
 
-    return render_template('validate_client_record.html', form=form, client_record=client_record) # new end
+#     return render_template('validate_client_record.html', form=form, client_record=client_record) # new end
 
-    #return render_template('validate_client_record.html', form=form)
+#     #return render_template('validate_client_record.html', form=form)
 
 @app.route('/fetch_client_record', methods=['GET'])
 @login_required
@@ -505,7 +508,7 @@ def client_record():
             client_record.client_folder = form.client_folder.data
 
         client_record.userid_cr = current_user.id
-        client_record.curr_cr = curr(client_record.laspud_po, cutoff, grace_period)
+        client_record.curr_cr = curr(client_record.laspud_po, client_record.mrefill_po, cutoff, grace_period)
 
 
         db.session.commit()

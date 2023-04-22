@@ -25,15 +25,15 @@ session = Session()
 
 def categorize_age(age):
     if age <= 6:
-        return "0 <= age <= 6"
+        return "0-6"
     elif age <= 12:
-        return "6 < age <= 12"
+        return "7-12"
     elif age <= 18:
-        return "12 < age <= 18"
+        return "13-18"
     elif age <= 24:
-        return "18 < age <= 24"
+        return "19-24"
     else:
-        return "age > 24"
+        return "25+"
     
 def age_group(age):
     if age < 1:
@@ -161,7 +161,7 @@ def main():
 
     # Create a DataFrame containing all age groups
     all_tx_age_groups = pd.DataFrame({
-        'tx_age_group': ["0 <= age <= 6", "6 < age <= 12", "12 < age <= 18", "18 < age <= 24", "age > 24"]
+        'tx_age_group': ["0-6", "7-12", "13-18", "19-24", "25+"]
     })
 
     # Merge with yes_grouped, filling missing counts with 0
@@ -169,8 +169,8 @@ def main():
 
     # Bar chart of average count of 'yes' in curr_ll by age group
     bar_chart = alt.Chart(merged_yes_grouped).mark_bar().encode(
-        x='tx_age_group:O',
-        y='curr_ll:Q',
+        x=alt.X('tx_age_group:O', sort=["0-6", "7-12", "13-18", "19-24", "25+"]),
+        y=alt.Y('curr_ll:Q'),
         tooltip=['tx_age_group', 'curr_ll']
     )
 
