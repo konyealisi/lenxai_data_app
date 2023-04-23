@@ -55,6 +55,8 @@ class DataEntry(db.Model):
     quantityd_pw_correct = db.Column(db.Boolean, nullable=True)
     pharm_doc = db.Column(db.String(5), nullable=True)
     client_folder = db.Column(db.String(5), nullable=True)
+    entry_datetime_cr = db.Column(db.DateTime, nullable=True)
+    entry_datetime_pr = db.Column(db.DateTime, nullable=True)
 
    
     def to_dict(self):
@@ -80,14 +82,15 @@ class Facility(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     facility_name = db.Column(db.String(128), nullable=False, unique=True)
     client_records = relationship("DataEntry", back_populates="facility")
+    country = db.Column(db.String(128), nullable=True)
     state = db.Column(db.String(128), nullable=True)
     lga = db.Column(db.String(128), nullable=True)
     latitude = db.Column(Numeric(precision=8, scale=4), nullable=True)
     longitude = db.Column(Numeric(precision=8, scale=4), nullable=True)
-    txcurr_ndr = db.Column(db.Integer, nullable=True)
-    txcurr_cr = db.Column(db.Integer, nullable=True)
-    txcurr_pr = db.Column(db.Integer, nullable=True)
-    txcurr_vf = db.Column(Numeric(precision=5, scale=2), nullable=True)
+    facility_type = db.Column(db.String(128), nullable=True)
+    facility_ownership = db.Column(db.String(128), nullable=True)
+    funder = db.Column(db.String(128), nullable=True)
+    implementing_partner = db.Column(db.String(128), nullable=True)
 
     def to_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

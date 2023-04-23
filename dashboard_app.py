@@ -24,6 +24,27 @@ engine = create_engine(db_url)
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
+
+# def login_page():
+#     st.title("Login")
+#     username = st.text_input("Username")
+#     password = st.text_input("Password", type="password")
+#     if st.button("Login"):
+#         user_role = check_credentials(username, password)
+#         if user_role:
+#             st.success(f"Logged in as {user_role}")
+#         return user_role
+#         else:
+#             st.error("Invalid credentials")
+#         return None
+
+
+# def check_credentials(username, password):
+#     if username in users and users[username]['password'] == password:
+#         return users[username]['role']
+#     return None
+
 def categorize_age(age):
     if age <= 6:
         return "0-6"
@@ -93,7 +114,45 @@ def bar_chart_age_sex(filtered_df):
         tooltip=['age_group', 'sex', 'curr_ll']
     )
 
-    st.subheader("TX_Curr by Age and Sex")
+    st.write("<h3 align='center'>TX_Curr by Age and Sex</h3>", unsafe_allow_html=True)
+    st.altair_chart(bar_chart, use_container_width=True)
+
+
+def bar_chart_age_sex1(filtered_df):
+    yes_grouped = filtered_df[filtered_df['curr_ll'] == 'yes'].groupby(['age_group', 'sex']).size().reset_index(name='curr_ll')
+
+    all_age_groups = pd.DataFrame({
+        'age_group': ["<1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65+"]
+    })
+
+    pivot_table = yes_grouped.pivot_table(index='age_group', columns='sex', values='curr_ll', fill_value=0).reset_index()
+
+    pivot_table.columns.name = None
+    pivot_table.reset_index(drop=True, inplace=True)
+
+    merged_grouped_data = all_age_groups.merge(pivot_table, on='age_group', how='left').fillna(0)
+
+    value_vars = [col for col in ['Male', 'Female'] if col in merged_grouped_data.columns]
+    melted_grouped_data = pd.melt(merged_grouped_data, id_vars=['age_group'], value_vars=value_vars, var_name='sex', value_name='curr_ll')
+
+    age_group_order = ["<1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65+"]
+
+    melted_grouped_data['age_group'] = pd.Categorical(melted_grouped_data['age_group'], categories=age_group_order, ordered=True)
+    melted_grouped_data = melted_grouped_data.sort_values(['age_group', 'sex'])
+
+    melted_grouped_data['direction'] = melted_grouped_data['sex'].apply(lambda x: -1 if x == 'Male' else 1)
+    melted_grouped_data['curr_ll'] = melted_grouped_data['curr_ll'] * melted_grouped_data['direction']
+
+    bar_chart = alt.Chart(melted_grouped_data).mark_bar().encode(
+        y=alt.Y('age_group:O', axis=alt.Axis(title='Age Group'), sort=age_group_order),
+        x=alt.X('curr_ll:Q', axis=alt.Axis(title='TX_Curr')),
+        color='sex:N',
+        tooltip=['age_group', 'sex', alt.Tooltip('curr_ll:Q', format=',.0f')]
+    ).properties(
+        height=600  # Set the desired height of the chart
+    )
+
+    st.write("<h3 align='center'>TX_Curr by Age and Sex</h3>", unsafe_allow_html=True)
     st.altair_chart(bar_chart, use_container_width=True)
 
 def bar_chart_tx_age(filtered_df):
@@ -108,12 +167,12 @@ def bar_chart_tx_age(filtered_df):
     merged_yes_grouped = all_tx_age_groups.merge(yes_grouped, on='tx_age_group', how='left').fillna(0)
 
     bar_chart = alt.Chart(merged_yes_grouped).mark_bar().encode(
-        x=alt.X('tx_age_group:O', sort=["0-6", "7-12", "13-18", "19-24", "25+"]),
-        y=alt.Y('curr_ll:Q'),
+        x=alt.X('tx_age_group:O', axis=alt.Axis(title='Treatment Age (Months)'), sort=["0-6", "7-12", "13-18", "19-24", "25+"]),
+        y=alt.Y('curr_ll:Q', axis=alt.Axis(title='TX_Curr')),
         tooltip=['tx_age_group', 'curr_ll']
     )
 
-    st.subheader("TX_Curr by Tx_age")
+    st.write("<h3 align='center'>TX_Curr by Tx_age</h3>", unsafe_allow_html=True)
     st.altair_chart(bar_chart, use_container_width=True)
 
 def scatter_plot_tx_age(filtered_df):
@@ -123,17 +182,20 @@ def scatter_plot_tx_age(filtered_df):
         tooltip=['tx_age', 'curr_ll']
     ).interactive()
 
-    st.subheader("Scatter plot of tx_age vs Tx_Curr")
+    st.write("<h3 align='center'>Scatter plot of tx_age vs Tx_Curr</h3>", unsafe_allow_html=True)
     st.altair_chart(scatter_plot, use_container_width=True)
 
 def display_facility_table(facility_df):
-    st.subheader("Facility")
+    
+    st.write("<h3 align='center'>Facility Table</h3>", unsafe_allow_html=True)
     st.dataframe(facility_df)
 
 
 def page_1(filtered_df):
     # Your visualizations for page 1
     bar_chart_age_sex(filtered_df)
+    bar_chart_age_sex1(filtered_df)
+    #bar_chart_age_sex2(filtered_df)
 
 def page_2(filtered_df):
     # Your visualizations for page 2
