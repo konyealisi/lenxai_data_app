@@ -588,8 +588,12 @@ def client_record():
         client_record.userid_cr = current_user.id
         client_record.curr_cr = curr(client_record.laspud_po, client_record.mrefill_po, cutoff, grace_period)
 
+        # Store the current date and time in the database as entry_datetime
+        client_record.entry_datetime_cr = datetime.now()
 
+        # Save the changes to the database
         db.session.commit()
+
         flash('Client record updated successfully.', 'success')
         return redirect(url_for('landing'))
     
@@ -654,10 +658,14 @@ def pharm_record():
             client_record.pharm_doc = form.pharm_doc.data
 
         client_record.userid_pr = current_user.id
-        client_record.curr_pr = curr(client_record.laspud_pw, cutoff, grace_period)
+        client_record.curr_pr = curr(client_record.laspud_pw, client_record.mrefill_pw, cutoff, grace_period)
 
+        # Store the current date and time in the database as entry_datetime
+        client_record.entry_datetime_pr = datetime.now()
 
+        # Save the changes to the database
         db.session.commit()
+        
         flash('Client record updated successfully.', 'success')
         return redirect(url_for('landing'))
     
