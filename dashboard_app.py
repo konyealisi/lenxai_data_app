@@ -119,7 +119,9 @@ def bar_chart_age_sex(filtered_df):
 
 
 def bar_chart_age_sex1(filtered_df):
+    #print("Original filtered_df:\n", filtered_df.head())
     yes_grouped = filtered_df[filtered_df['curr_ll'] == 'yes'].groupby(['age_group', 'sex']).size().reset_index(name='curr_ll')
+    #print("yes_grouped:\n", yes_grouped.head())
 
     all_age_groups = pd.DataFrame({
         'age_group': ["<1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65+"]
@@ -265,6 +267,7 @@ def main():
 
     
     filtered_df = merged_df.copy()
+    filtered_df['curr_ll'] = filtered_df['curr_ll'].str.lower().str.strip()
 
     # Filter the data based on the selected filters
     if 'All' not in selected_state:

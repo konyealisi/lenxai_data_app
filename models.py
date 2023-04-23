@@ -96,193 +96,118 @@ class Facility(db.Model):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-def update_facility_after_data_entry_change(mapper, connection, target):
-    # Retrieve the facility related to the changed data_entry
-    facility = target.facility
+# def update_facility_after_data_entry_change(mapper, connection, target):
+#     # Retrieve the facility related to the changed data_entry
+#     facility = target.facility
 
-    # Check if the facility attribute is not None
-    if facility is not None:
-        # Calculate the sum of the count of 'yes' for curr_ll in data_entry table for the facility
-        Session = sessionmaker(bind=connection)
-        session = Session()
-        txcurr_ndr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_ll == 'yes').count()
-        txcurr_cr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_cr == 'yes').count()
-        txcurr_pr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_pr == 'yes').count()
-
-        txcurr_ndr_vf = session.query(DataEntry).filter(
-            DataEntry.facility_name == facility.facility_name,
-            DataEntry.curr_ll == 'yes',
-            DataEntry.curr_cr.isnot(None)  # Use the .isnot() method instead of !=
-        ).count()
-
-        txcurr_cr_vf = session.query(DataEntry).filter(
-            DataEntry.facility_name == facility.facility_name,
-            DataEntry.curr_ll.isnot(None),  # Use the .isnot() method instead of !=
-            DataEntry.curr_cr == 'yes'
-        ).count()
-        # Calculate txcur_vf as txcurr_cr/txcurr_ndr to 2 decimal places
-        if txcurr_ndr_vf != 0:
-            txcur_vf = round(txcurr_cr_vf / txcurr_ndr_vf, 2)
-        else:
-            txcur_vf = None
-
-        # Update the txcurr_ndr in the facility table
-        facility.txcurr_ndr = txcurr_ndr
-        facility.txcurr_cr = txcurr_cr
-        facility.txcurr_pr = txcurr_pr
-        facility.txcur_vf = txcur_vf
-
-        # Commit the changes to the database
-        session.merge(facility)
-        session.commit()
-
-# Add event listeners
-event.listen(DataEntry, 'after_insert', update_facility_after_data_entry_change)
-event.listen(DataEntry, 'after_update', update_facility_after_data_entry_change)
-event.listen(DataEntry, 'after_delete', update_facility_after_data_entry_change)
-
-#
-
-# def update_all_facilities_txcurr_ndr():
-#     # Get all the facilities
-#     facilities = Facility.query.all()
-
-#     for facility in facilities:
+#     # Check if the facility attribute is not None
+#     if facility is not None:
 #         # Calculate the sum of the count of 'yes' for curr_ll in data_entry table for the facility
-#         txcurr_ndr = DataEntry.query.filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_ll == 'yes').count()
+#         Session = sessionmaker(bind=connection)
+#         session = Session()
+#         txcurr_ndr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_ll == 'yes').count()
+#         txcurr_cr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_cr == 'yes').count()
+#         txcurr_pr = session.query(DataEntry).filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_pr == 'yes').count()
+
+#         txcurr_ndr_vf = session.query(DataEntry).filter(
+#             DataEntry.facility_name == facility.facility_name,
+#             DataEntry.curr_ll == 'yes',
+#             DataEntry.curr_cr.isnot(None)  # Use the .isnot() method instead of !=
+#         ).count()
+
+#         txcurr_cr_vf = session.query(DataEntry).filter(
+#             DataEntry.facility_name == facility.facility_name,
+#             DataEntry.curr_ll.isnot(None),  # Use the .isnot() method instead of !=
+#             DataEntry.curr_cr == 'yes'
+#         ).count()
+#         # Calculate txcur_vf as txcurr_cr/txcurr_ndr to 2 decimal places
+#         if txcurr_ndr_vf != 0:
+#             txcur_vf = round(txcurr_cr_vf / txcurr_ndr_vf, 2)
+#         else:
+#             txcur_vf = None
 
 #         # Update the txcurr_ndr in the facility table
 #         facility.txcurr_ndr = txcurr_ndr
-
-#     # Commit the changes to the database
-#     db.session.commit()
-
-
-# def update_all_facilities_txcurr_cr():
-#     # Get all the facilities
-#     facilities = Facility.query.all()
-
-#     for facility in facilities:
-#         # Calculate the sum of the count of 'yes' for curr_ll in data_entry table for the facility
-#         txcurr_cr = DataEntry.query.filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_cr == 'yes').count()
-
-#         # Update the txcurr_ndr in the facility table
 #         facility.txcurr_cr = txcurr_cr
-
-#     # Commit the changes to the database
-#     db.session.commit()
-
-# def update_all_facilities_txcurr_pr():
-#     # Get all the facilities
-#     facilities = Facility.query.all()
-
-#     for facility in facilities:
-#         # Calculate the sum of the count of 'yes' for curr_ll in data_entry table for the facility
-#         txcurr_pr = DataEntry.query.filter(DataEntry.facility_name == facility.facility_name, DataEntry.curr_pr == 'yes').count()
-
-#         # Update the txcurr_ndr in the facility table
 #         facility.txcurr_pr = txcurr_pr
+#         facility.txcur_vf = txcur_vf
 
-#     # Commit the changes to the database
-#     db.session.commit()
+#         # Commit the changes to the database
+#         session.merge(facility)
+#         session.commit()
 
-# def update_all_facilities_txcurr_vf():
+# # Add event listeners
+# event.listen(DataEntry, 'after_insert', update_facility_after_data_entry_change)
+# event.listen(DataEntry, 'after_update', update_facility_after_data_entry_change)
+# event.listen(DataEntry, 'after_delete', update_facility_after_data_entry_change)
+
+#
+
+
+# def update_all_facilities():
 #     # Get all facilities
 #     facilities = Facility.query.all()
 
-#     # Loop through each facility and update txcurr_ndr, txcurr_cr, and txcur_vf
+#     # Loop through each facility and update txcurr_ndr, txcurr_cr, txcurr_pr, and txcur_vf
 #     for facility in facilities:
-#         txcurr_ndr_vf = DataEntry.query.filter(
-#             DataEntry.facility_name == facility.facility_name, 
-#             DataEntry.curr_ll == 'yes', 
-#             DataEntry.curr_cr != None
+#         txcurr_ndr = DataEntry.query.filter(
+#             DataEntry.facility_name == facility.facility_name,
+#             DataEntry.curr_ll == 'yes'
 #         ).count()
-#         txcurr_cr_vf = DataEntry.query.filter(
-#             DataEntry.facility_name == facility.facility_name, 
-#             DataEntry.curr_ll != None, 
+
+#         txcurr_cr = DataEntry.query.filter(
+#             DataEntry.facility_name == facility.facility_name,
 #             DataEntry.curr_cr == 'yes'
 #         ).count()
+
+#         txcurr_pr = DataEntry.query.filter(
+#             DataEntry.facility_name == facility.facility_name,
+#             DataEntry.curr_pr == 'yes'
+#         ).count()
+
+#         # txcurr_ndr_vf = DataEntry.query.filter(
+#         #     DataEntry.facility_name == facility.facility_name,
+#         #     DataEntry.curr_ll == 'yes',
+#         #     DataEntry.curr_cr != None
+#         # ).count()
+
+#         # txcurr_cr_vf = DataEntry.query.filter(
+#         #     DataEntry.facility_name == facility.facility_name,
+#         #     DataEntry.curr_ll != None,
+#         #     DataEntry.curr_cr == 'yes'
+#         # ).count()
+
+#         txcurr_ndr_vf = DataEntry.query.filter(
+#             DataEntry.facility_name == facility.facility_name,
+#             DataEntry.curr_ll == 'yes',
+#             DataEntry.curr_cr.isnot(None)
+#         ).count()
+
+#         txcurr_cr_vf = DataEntry.query.filter(
+#             DataEntry.facility_name == facility.facility_name,
+#             DataEntry.curr_ll.isnot(None),
+#             DataEntry.curr_cr == 'yes'
+#         ).count()
+
 
 #         if txcurr_ndr_vf != 0:
 #             txcur_vf = round(txcurr_cr_vf / txcurr_ndr_vf, 2)
 #         else:
 #             txcur_vf = None
-#         #txcur_vf = round(txcurr_cr / txcurr_ndr, 2)
 
-#         # Update the txcurr_ndr, txcurr_cr, and txcur_vf in the facility table
-#         # facility.txcurr_ndr = txcurr_ndr
-#         # facility.txcurr_cr = txcurr_cr
+#         # Update the txcurr_ndr, txcurr_cr, txcurr_pr, and txcur_vf in the facility table
+#         facility.txcurr_ndr = txcurr_ndr
+#         facility.txcurr_cr = txcurr_cr
+#         facility.txcurr_pr = txcurr_pr
 #         facility.txcur_vf = txcur_vf
 
 #         # Commit the changes to the database
-#         db.session.add(facility)
+#         db.session.merge(facility)
 
 #     db.session.commit()
 
-def update_all_facilities():
-    # Get all facilities
-    facilities = Facility.query.all()
-
-    # Loop through each facility and update txcurr_ndr, txcurr_cr, txcurr_pr, and txcur_vf
-    for facility in facilities:
-        txcurr_ndr = DataEntry.query.filter(
-            DataEntry.facility_name == facility.facility_name,
-            DataEntry.curr_ll == 'yes'
-        ).count()
-
-        txcurr_cr = DataEntry.query.filter(
-            DataEntry.facility_name == facility.facility_name,
-            DataEntry.curr_cr == 'yes'
-        ).count()
-
-        txcurr_pr = DataEntry.query.filter(
-            DataEntry.facility_name == facility.facility_name,
-            DataEntry.curr_pr == 'yes'
-        ).count()
-
-        # txcurr_ndr_vf = DataEntry.query.filter(
-        #     DataEntry.facility_name == facility.facility_name,
-        #     DataEntry.curr_ll == 'yes',
-        #     DataEntry.curr_cr != None
-        # ).count()
-
-        # txcurr_cr_vf = DataEntry.query.filter(
-        #     DataEntry.facility_name == facility.facility_name,
-        #     DataEntry.curr_ll != None,
-        #     DataEntry.curr_cr == 'yes'
-        # ).count()
-
-        txcurr_ndr_vf = DataEntry.query.filter(
-            DataEntry.facility_name == facility.facility_name,
-            DataEntry.curr_ll == 'yes',
-            DataEntry.curr_cr.isnot(None)
-        ).count()
-
-        txcurr_cr_vf = DataEntry.query.filter(
-            DataEntry.facility_name == facility.facility_name,
-            DataEntry.curr_ll.isnot(None),
-            DataEntry.curr_cr == 'yes'
-        ).count()
-
-
-        if txcurr_ndr_vf != 0:
-            txcur_vf = round(txcurr_cr_vf / txcurr_ndr_vf, 2)
-        else:
-            txcur_vf = None
-
-        # Update the txcurr_ndr, txcurr_cr, txcurr_pr, and txcur_vf in the facility table
-        facility.txcurr_ndr = txcurr_ndr
-        facility.txcurr_cr = txcurr_cr
-        facility.txcurr_pr = txcurr_pr
-        facility.txcur_vf = txcur_vf
-
-        # Commit the changes to the database
-        db.session.merge(facility)
-
-    db.session.commit()
-
-# Call the function to update all facilities
-#update_all_facilities()
+# # Call the function to update all facilities
+# #update_all_facilities()
 
 
 

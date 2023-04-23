@@ -24,7 +24,7 @@ from functools import wraps
 
 from forms import LoginForm, DataEntryForm, RegistrationFormAdmin, RegistrationFormSuperuser, FacilityClientForm, FacilityForm, PhamarcyForm#, ValidateRecordForm
 from utils import facility_choices, client_choices, allowed_file, calculate_age, calculate_age_in_months, clean_dataframe, entry_exists, facility_exists, curr, get_facility_names
-from models import db, User, DataEntry, Facility, update_all_facilities#, update_all_facilities_txcurr_pr, update_all_facilities_txcurr_cr, update_all_facilities_txcurr_ndr, update_all_facilities_txcurr_vf
+from models import db, User, DataEntry, Facility#, update_all_facilities, update_all_facilities_txcurr_pr, update_all_facilities_txcurr_cr, update_all_facilities_txcurr_ndr, update_all_facilities_txcurr_vf
 from sqlalchemy.engine.reflection import Inspector
 from flask.cli import AppGroup
 
@@ -313,25 +313,90 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 cutoff = date(year=2022, month=6, day=30)
 grace_period = 28
 
-@app.route("/upload_facility")
+# @app.route("/upload_facility", methods=['GET', 'POST'])
+# @requires_roles('sysadmin','admin')
+# def upload_facility():
+#     if request.method == 'POST':
+#         # check if the post request has the file part
+#         if 'file' not in request.files:
+#             flash('No file part', 'danger')
+#             return redirect(request.url)
+#         file = request.files['file']
+#         # if user does not select file, browser also
+#         # submits an empty part without filename
+#         if file.filename == '':
+#             flash('No selected file', 'danger')
+#             return redirect(request.url)
+#         if file and allowed_file(file.filename):
+#             filename = secure_filename(file.filename)
+#             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+#             # Read the file and process the data
+#             if filename.endswith('.csv'):
+#                 df = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+#             elif filename.endswith('.xls') or filename.endswith('.xlsx'):
+#                 df = pd.read_excel(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+#             elif filename.endswith('.json'):
+#                 df = pd.read_json(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+#             elif filename.endswith('.xml'):
+#                 df = pd.read_xml(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            
+#             # Remove text within brackets (including the brackets) and question marks from column names
+#             df.columns = df.columns.str.replace(r'\s*[\(\[].*?[\)\]]|\?', '', regex=True)
+            
+#             #clean data 
+#             df = clean_dataframe(df)
+
+#             # Process the data and save it to the database
+#             facility_mapping = {
+#                 'Facility Name': 'facility_name',
+#                 'Country': 'country',
+#                 'State': 'state',
+#                 'LGA': 'lga',
+#                 'Latitude': 'latitude',
+#                 'Longiude': 'longitude',
+#                 'Facility type': 'facility_type',
+#                 'Facility Ownership': 'facility_ownership',
+#                 'Funder': 'funder',
+#                 'Implementing Partner': 'implementing_partner'
+                
+#             }
+
+
+#             # Process the data and save it to the database -Facility table
+#             for index, row in df.iterrows():
+#                 fac_data = {}
+#                 for file_col, data_entry_col in facility_mapping.items():
+#                     if file_col in df.columns:  # Check if the file_col exists in the DataFrame
+#                         fac_data[data_entry_col] = row[file_col]
+#                     else:
+#                         fac_data[data_entry_col] = None  # Assign a default value (e.g., None) if the file_col is missing
+#                 if fac_data['facility_name'] is not None and not facility_exists(fac_data['facility_name']):
+#                     new_entry = Facility(**fac_data)
+#                     db.session.add(new_entry)
+#                     db.session.commit()
+
+
+#             flash('Data uploaded successfully!', 'success')
+#             return redirect(url_for('landing'))
+#     return render_template("uploadfacility.html")
+
+@app.route("/upload_facility", methods=['GET', 'POST'])
 @requires_roles('sysadmin','admin')
 def upload_facility():
     if request.method == 'POST':
-        # check if the post request has the file part
         if 'file' not in request.files:
             flash('No file part', 'danger')
             return redirect(request.url)
         file = request.files['file']
-        # if user does not select file, browser also
-        # submits an empty part without filename
         if file.filename == '':
             flash('No selected file', 'danger')
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            print("File saved at:", os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-            # Read the file and process the data
             if filename.endswith('.csv'):
                 df = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             elif filename.endswith('.xls') or filename.endswith('.xlsx'):
@@ -341,40 +406,40 @@ def upload_facility():
             elif filename.endswith('.xml'):
                 df = pd.read_xml(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             
-            # Remove text within brackets (including the brackets) and question marks from column names
-            df.columns = df.columns.str.replace(r'\s*[\(\[].*?[\)\]]|\?', '', regex=True)
-            
-            #clean data 
-            df = clean_dataframe(df)
+            print("Data read from file:\n", df)
 
-            # Process the data and save it to the database
+            df.columns = df.columns.str.replace(r'\s*[\(\[].*?[\)\]]|\?', '', regex=True)
+            print("Column names after processing:\n", df.columns)
+
             facility_mapping = {
-                'facility': 'facility_name',
-                'state': 'state',
-                'lga': 'lga',
-                'lat': 'latitude',
-                'long': 'longitude'
-                
+                'Facility Name': 'facility_name',
+                'Country': 'country',
+                'State': 'state',
+                'LGA': 'lga',
+                'Latitude': 'latitude',
+                'Longitude': 'longitude',
+                'Facility type': 'facility_type',
+                'Facility Ownership': 'facility_ownership',
+                'Funder': 'funder',
+                'Implementing Partner': 'implementing_partner'
             }
 
-
-            # Process the data and save it to the database -Facility table
             for index, row in df.iterrows():
                 fac_data = {}
                 for file_col, data_entry_col in facility_mapping.items():
-                    if file_col in df.columns:  # Check if the file_col exists in the DataFrame
+                    if file_col in df.columns:
                         fac_data[data_entry_col] = row[file_col]
                     else:
-                        fac_data[data_entry_col] = None  # Assign a default value (e.g., None) if the file_col is missing
-                if not facility_exists(fac_data['facility_name']):
+                        fac_data[data_entry_col] = None
+                print("Facility data:", fac_data)
+                if fac_data['facility_name'] is not None and not facility_exists(fac_data['facility_name']):
                     new_entry = Facility(**fac_data)
                     db.session.add(new_entry)
                     db.session.commit()
-
-            
+                    print(f"Added new facility: {fac_data['facility_name']}")
 
             flash('Data uploaded successfully!', 'success')
-            return redirect(url_for('upload'))
+            return redirect(url_for('landing'))
     return render_template("uploadfacility.html")
 
 
@@ -488,7 +553,7 @@ def upload_data():
             
 
             flash('Data uploaded successfully!', 'success')
-            return redirect(url_for('upload'))
+            return redirect(url_for('landing'))
     return render_template('uploaddata.html')
 
 
@@ -847,6 +912,6 @@ if __name__ == '__main__':
         # update_all_facilities_txcurr_cr()
         # update_all_facilities_txcurr_ndr()
         # update_all_facilities_txcurr_vf()
-        update_all_facilities()
+        #update_all_facilities()
     app.run(debug=True)
     #app.run(host='192.168.0.9', port=5000)
