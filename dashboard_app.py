@@ -223,7 +223,6 @@ def main():
 
 
     # Load DataEntry data
-        # Load DataEntry data
     data_entry_query = text("SELECT * FROM data_entry")  # Replace 'data_entry' with the correct table name
     data_entry_result = session.execute(data_entry_query)
     data_entry_df = pd.DataFrame(data_entry_result.fetchall(), columns=data_entry_result.keys())

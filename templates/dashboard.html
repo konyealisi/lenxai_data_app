@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Stock Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="bg-dark text-white py-3">
+    <div class="container">
+      <h1 class="text-center">Stock Dashboard</h1>
+    </div>
+  </header>
+
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="stockSymbol">Stock Symbol</label>
+          <input type="text" class="form-control" id="stockSymbol" placeholder="Enter stock symbol">
+        </div>
+        <div class="form-group">
+          <label for="dateRange">Date Range</label>
+          <input type="text" class="form-control" id="dateRange" placeholder="Select date range">
+        </div>
+      </div>
+      <div class="col-md-9">
+        <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="price-tab" data-toggle="tab" href="#price" role="tab" aria-controls="price" aria-selected="true">Price Chart</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="volume-tab" data-toggle="tab" href="#volume" role="tab" aria-controls="volume" aria-selected="false">Volume Chart</a>
+          </li>
+          <!-- Add more tabs as needed -->
+        </ul>
+        <div class="tab-content" id="dashboardTabsContent">
+          <div class="tab-pane fade show active" id="price" role="tabpanel" aria-labelledby="price-tab">
+            <canvas id="priceChart" style="max-width: 100%; height: 400px;"></canvas>
+          </div>
+          <div class="tab-pane fade" id="volume" role="tabpanel" aria-labelledby="volume-tab">
+            <canvas id="volumeChart" style="max-width: 100%; height: 400px;"></canvas>
+          </div>
+          <!-- Add more chart containers as needed -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-dark text-white py-3 mt-5">
+    <div class="container">
+      <p class="text-center mb-0">Copyright &copy; 2023 Your Company Name. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

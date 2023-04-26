@@ -6,6 +6,7 @@ import subprocess
 import re
 
 from sqlalchemy import text, create_engine, inspect
+from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
@@ -27,6 +28,8 @@ from utils import facility_choices, client_choices, allowed_file, calculate_age,
 from models import db, User, DataEntry, Facility#, update_all_facilities, update_all_facilities_txcurr_pr, update_all_facilities_txcurr_cr, update_all_facilities_txcurr_ndr, update_all_facilities_txcurr_vf
 from sqlalchemy.engine.reflection import Inspector
 from flask.cli import AppGroup
+
+from dashboard import init_dash
 
 
 
@@ -793,6 +796,34 @@ def get_client_data(client_id):
         quantityd_pw=client_data.quantityd_pw
     )
 
+@app.route('/get-data')
+def get_data():
+    # Connect to the database
+    db_url = f"postgresql://{db_user}:{db_password}@{db_host}/{db_name}"
+    engine = create_engine(db_url)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    # Load DataEntry data
+    data_entry_query = text("SELECT * FROM data_entry")  # Replace 'data_entry' with the correct table name
+    data_entry_result = session.execute(data_entry_query)
+    data_entry_df = pd.DataFrame(data_entry_result.fetchall(), columns=data_entry_result.keys())
+
+    # Load Facility data
+    facility_query = text("SELECT * FROM facility")  # Replace 'facility' with the correct table name
+    facility_result = session.execute(facility_query)
+    facility_df = pd.DataFrame(facility_result.fetchall(), columns=facility_result.keys())
+
+    # Merge the facility table with the data_entry table on facility_name
+    merged_df = data_entry_df.merge(facility_df, on='facility_name', how='left')
+
+    # Convert the merged DataFrame to JSON
+    merged_data = merged_df.to_json(orient='records')
+    return jsonify(data=merged_data)
+
+# @app.route('/dashboard')
+# def dashboard():
+#     return render_template('dashboard.html')
 
 @app.cli.command('drop-data-entry-table')
 #@requires_roles('sysadmin')
@@ -895,14 +926,20 @@ def drop_data_user_id_table():
 def inject_current_year():
     return {'current_year': datetime.utcnow().year}
 
-@app.route('/dashboard_app')
-@requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dashboard')
-def dashboard_app():
-    cmd = "streamlit run dashboard_app.py"
-    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-    process.terminate()
-    return redirect("http://localhost:8501")
+# @app.route('/dashboard_app')
+# @requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dashboard')
+# def dashboard_app():
+#     cmd = "streamlit run dashboard_app.py"
+#     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+#     process.terminate()
+#     return redirect("http://localhost:8501")
 
+dash_app = init_dash(app)
+
+@app.route('/dashboard')
+@login_required
+def render_dashboard():
+    return dash_app.index() 
 
 
 if __name__ == '__main__':
@@ -913,5 +950,5 @@ if __name__ == '__main__':
         # update_all_facilities_txcurr_ndr()
         # update_all_facilities_txcurr_vf()
         #update_all_facilities()
-    app.run(debug=True)
-    #app.run(host='192.168.0.9', port=5000)
+    #app.run(debug=True)
+    app.run(host='192.168.0.9', port=5000, debug=True)
