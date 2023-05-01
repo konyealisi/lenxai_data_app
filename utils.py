@@ -131,44 +131,17 @@ def age_group(age):
         return "65+"
 
 
-# Group the DataFrame by required columns
-#grouped_df = merged_df[merged_df['curr_ll'].isin(['yes', 'no'])].groupby(['state', 'lga', 'facility_name', 'facility_type', 'facility_ownership', 'latitude', 'longitude'])
 def txcurr_vf(merged_df):
     # Filter the merged_df DataFrame, keeping only the rows where the curr_ll value is 'yes' and curr_pr value is either 'yes' or 'no'
     filtered_merged_df = merged_df[(merged_df['curr_ll'] == 'yes') & (merged_df['curr_pr'].isin(['yes', 'no']))]
     
-    # for col in ['state', 'lga', 'facility_name', 'facility_type', 'facility_ownership', 'latitude', 'longitude']:
-    #     print(f"{col}: {filtered_merged_df[col].unique()}")
-
-    # filtered_merged_df['txcurr_ndr'] = (filtered_merged_df['curr_ll'] == 'yes').astype(int)
-    # filtered_merged_df['txcurr_pr'] = ((filtered_merged_df['curr_pr'] == 'yes') | (filtered_merged_df['curr_pr'] == 'no')).astype(int)
-
     filtered_merged_df['latitude'] = filtered_merged_df['latitude'].fillna(0)
     filtered_merged_df['longitude'] = filtered_merged_df['longitude'].fillna(0)
-
-    # grouped_df = filtered_merged_df.groupby(['state', 'lga', 'facility_name', 'facility_type', 'facility_ownership', 'latitude', 'longitude'])[['txcurr_ndr', 'txcurr_pr']].sum().reset_index()
-
-    # grouped_df['txcurr_vf'] = grouped_df['txcurr_ndr'] - grouped_df['txcurr_pr']
-
-    # print("Grouped Counts DataFrame:")
-    # print(grouped_df)
-
-    # grouped_df = filtered_merged_df[filtered_merged_df['curr_ll'].isin(['yes', 'no'])].groupby(['state', 'lga', 'facility_name', 'facility_type', 'facility_ownership', 'latitude', 'longitude'])
-    
-    # print("~~~~~~~~~~~")
-    # print(grouped_df.head())
-
-
 
     # Group the DataFrame by the required columns
     grouped_df = filtered_merged_df.groupby(['state', 'lga', 'facility_name', 'facility_type', 'facility_ownership', 'latitude', 'longitude'])
 
-    # Calculate the counts for txcurr_ndr and txcurr_pr
-    # grouped_counts = grouped_df.agg(
-    #     txcurr_ndr=pd.NamedAgg(column='curr_ll', aggfunc=lambda x: x.eq('yes').sum()),
-    #     txcurr_pr=pd.NamedAgg(column='curr_pr', aggfunc=lambda x: x.eq('yes').sum())
-    # ).reset_index()
-
+   
     grouped_counts = grouped_df.agg(
         txcurr_ndr=('curr_ll', 'count'),
         txcurr_pr=('curr_pr', lambda x: (x == 'yes').sum()),
