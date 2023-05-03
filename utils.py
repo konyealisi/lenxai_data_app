@@ -350,8 +350,9 @@ def map_figure(df):
                             color_continuous_scale=px.colors.diverging.RdYlGn[::], color_continuous_midpoint=0.5, size_max=25, zoom=5)
     fig.update_layout(mapbox_style="carto-positron", mapbox_zoom=5,
                       margin={"r": 0, "t": 0, "l": 0, "b": 0},
-                      coloraxis_colorbar=dict(title="VF_Curr"),
+                      coloraxis_colorbar=dict(title="Verification Factor"),
                       height=600)
+    fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
     return fig
 
 def vf_plot_ip(grouped_counts):

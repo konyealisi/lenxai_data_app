@@ -99,6 +99,7 @@ class Facility(db.Model):
     facility_type = db.Column(db.String(128), nullable=True)
     facility_ownership = db.Column(db.String(128), nullable=True)
     funder = db.Column(db.String(128), nullable=True)
+    region = db.Column(db.String(128), nullable=True)
     implementing_partner = db.Column(db.String(128), nullable=True)
 
     def to_dict(self):

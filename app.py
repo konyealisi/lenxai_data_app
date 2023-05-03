@@ -269,6 +269,7 @@ def upload_facility():
                 'Facility type': 'facility_type',
                 'Facility Ownership': 'facility_ownership',
                 'Funder': 'funder',
+                'Region': 'region',
                 'Implementing Partner': 'implementing_partner'
             }
 
@@ -384,9 +385,24 @@ def upload_data():
                 'curr_ll': 'curr_ll'
             }
 
-            
+            # Filter the DataFrame to only include records with curr_ll == 'yes'
+            df = df[df['curr_ll'] == 'yes']
+
+            print(f'Total records before samplling {len(df)}')
+
+            # Function to perform sampling within each group
+            def sample_group(group, chunk_size=11):
+                chunks = [group.iloc[i:i + chunk_size] for i in range(0, group.shape[0], chunk_size)]
+                sampled_chunks = pd.concat([chunk.sample(1) for chunk in chunks if len(chunk) == chunk_size], axis=0)
+                return sampled_chunks
+
+            # Group the DataFrame by facility and perform the sampling within each group
+            sampled_df = df.groupby('facility').apply(sample_group).reset_index(drop=True)
+
+            print(f'Total records after samplling {len(sampled_df)}')
+
             # Process the data and save it to the database -DataEntry table
-            for index, row in df.iterrows():
+            for index, row in sampled_df.iterrows():
                 entry_data = {}
                 for file_col, data_entry_col in column_mapping.items():
                     if file_col in df.columns:  # Check if the file_col exists in the DataFrame
@@ -398,7 +414,6 @@ def upload_data():
                     db.session.add(new_entry)
                     db.session.commit()
 
-            
 
             flash('Data uploaded successfully!', 'success')
             return redirect(url_for('landing'))

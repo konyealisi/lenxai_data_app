@@ -65,7 +65,7 @@ grouped_counts = grouped_df.agg(
 df1 = pd.DataFrame(grouped_counts)
 
 def init_dash(app):
-    app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], server=app, url_base_pathname='/dashboard/')
+    app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], server=app, url_base_pathname='/dashboard/', title="DQA Analytics - LenxAI")
 
     app.layout = html.Div(
         style={"backgroundColor": "#104888"},
