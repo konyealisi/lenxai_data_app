@@ -240,7 +240,7 @@ def bar_chart_age_sex1(filtered_df):
 
     return fig
 
-
+import plotly.graph_objects as go
 
 def vf_plot_funder(grouped_counts):
     # Create a bar chart with Plotly
@@ -262,21 +262,35 @@ def vf_plot_funder(grouped_counts):
     grouped_sums.sort_values(by='txcurr_vf', inplace=True)
 
     # Add bars for txcurr_ndr and txcurr_pr
-    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_ndr'], name='Txcurr NDR', yaxis='y'))
-    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_pr'], name='Txcurr PR', yaxis='y'))
+    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_ndr'], name='Txcurr NDR', yaxis='y', text=grouped_sums['txcurr_ndr'], textposition='auto'))
+    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_pr'], name='Txcurr PR', yaxis='y', text=grouped_sums['txcurr_pr'], textposition='auto'))
 
     # Add txcurr_vf as a line plot on a secondary y-axis
     fig.add_trace(go.Scatter(x=grouped_sums.sort_values('txcurr_vf').index, 
                          y=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'], 
-                         name='Txcurr VF (%)', yaxis='y2', mode='lines+markers', 
-                         marker=dict(size=15), hovertemplate='%{y:.2f}%'))
+                         name='Txcurr VF (%)', yaxis='y2', mode='markers', 
+                         marker=dict(size=17), text=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'], textposition='top center', 
+                         hovertemplate='%{y:.2f}%<br><extra></extra>'#hovertemplate='%{y:.2f}%'
+                         ))
+    # Add annotations to the marker points
+    for i in range(len(grouped_sums)):
+        fig.add_annotation(x=grouped_sums.sort_values('txcurr_vf').index[i],
+                           y=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'][i],
+                           text=f"{grouped_sums.sort_values('txcurr_vf')['txcurr_vf'][i]:.2f}%",
+                           xanchor='center',
+                           yanchor='bottom',
+                           showarrow=False,
+                           font=dict(color='black', size=12),
+                           xshift=0,
+                           yshift=10,
+                           yref='y2')
 
     # Customize the layout
     fig.update_layout(
         title=f'Verification Factor by {a.capitalize()}',
         xaxis_title= f'{a.capitalize()}',
         yaxis_title='Counts',
-        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f', showgrid=False),
+        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
         height=500,
@@ -285,7 +299,10 @@ def vf_plot_funder(grouped_counts):
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
 
+   
     return fig
+
+
 
 def create_table(df):
     
@@ -354,24 +371,38 @@ def vf_plot_ip(grouped_counts):
     grouped_sums.columns = ['txcurr_ndr', 'txcurr_pr', 'txcurr_vf']
 
     # sort values by txcurr_vf
-    grouped_sums.sort_values(by='txcurr_vf', inplace=True, ascending=True)
+    grouped_sums.sort_values(by='txcurr_vf', inplace=True)
 
     # Add bars for txcurr_ndr and txcurr_pr
-    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_ndr'], name='Txcurr NDR', yaxis='y'))
-    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_pr'], name='Txcurr PR', yaxis='y'))
+    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_ndr'], name='Txcurr NDR', yaxis='y', text=grouped_sums['txcurr_ndr'], textposition='auto'))
+    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_pr'], name='Txcurr PR', yaxis='y', text=grouped_sums['txcurr_pr'], textposition='auto'))
 
     # Add txcurr_vf as a line plot on a secondary y-axis
     fig.add_trace(go.Scatter(x=grouped_sums.sort_values('txcurr_vf').index, 
                          y=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'], 
-                         name='Txcurr VF (%)', yaxis='y2', mode='lines+markers', 
-                         marker=dict(size=15), hovertemplate='%{y:.2f}%'))
+                         name='Txcurr VF (%)', yaxis='y2', mode='markers', 
+                         marker=dict(size=17), text=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'], textposition='top center', 
+                         hovertemplate='%{y:.2f}%<br><extra></extra>'#hovertemplate='%{y:.2f}%'
+                         ))
+    # Add annotations to the marker points
+    for i in range(len(grouped_sums)):
+        fig.add_annotation(x=grouped_sums.sort_values('txcurr_vf').index[i],
+                           y=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'][i],
+                           text=f"{grouped_sums.sort_values('txcurr_vf')['txcurr_vf'][i]:.2f}%",
+                           xanchor='center',
+                           yanchor='bottom',
+                           showarrow=False,
+                           font=dict(color='black', size=12),
+                           xshift=0,
+                           yshift=10,
+                           yref='y2')
 
     # Customize the layout
     fig.update_layout(
-        title=f'Verification Factor by Implementing Partner',
-        xaxis_title= f'Implementing Partner',
+        title='Verification Factor by Implementing Partner',
+        xaxis_title= 'Implementing Partner',
         yaxis_title='Counts',
-        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f', showgrid=False),
+        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
         height=500,
@@ -380,8 +411,8 @@ def vf_plot_ip(grouped_counts):
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
 
+   
     return fig
-
 
 def vf_plot_fo(grouped_counts):
     # Create a bar chart with Plotly
@@ -403,21 +434,35 @@ def vf_plot_fo(grouped_counts):
     grouped_sums.sort_values(by='txcurr_vf', inplace=True)
 
     # Add bars for txcurr_ndr and txcurr_pr
-    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_ndr'], name='Txcurr NDR', yaxis='y'))
-    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_pr'], name='Txcurr PR', yaxis='y'))
+    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_ndr'], name='Txcurr NDR', yaxis='y', text=grouped_sums['txcurr_ndr'], textposition='auto'))
+    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_pr'], name='Txcurr PR', yaxis='y', text=grouped_sums['txcurr_pr'], textposition='auto'))
 
     # Add txcurr_vf as a line plot on a secondary y-axis
     fig.add_trace(go.Scatter(x=grouped_sums.sort_values('txcurr_vf').index, 
                          y=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'], 
-                         name='Txcurr VF (%)', yaxis='y2', mode='lines+markers', 
-                         marker=dict(size=15), hovertemplate='%{y:.2f}%'))
+                         name='Txcurr VF (%)', yaxis='y2', mode='markers', 
+                         marker=dict(size=17), text=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'], textposition='top center', 
+                         hovertemplate='%{y:.2f}%<br><extra></extra>'#hovertemplate='%{y:.2f}%'
+                         ))
+    # Add annotations to the marker points
+    for i in range(len(grouped_sums)):
+        fig.add_annotation(x=grouped_sums.sort_values('txcurr_vf').index[i],
+                           y=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'][i],
+                           text=f"{grouped_sums.sort_values('txcurr_vf')['txcurr_vf'][i]:.2f}%",
+                           xanchor='center',
+                           yanchor='bottom',
+                           showarrow=False,
+                           font=dict(color='black', size=12),
+                           xshift=0,
+                           yshift=10,
+                           yref='y2')
 
     # Customize the layout
     fig.update_layout(
         title=f'Verification Factor by Facility Ownership',
-        xaxis_title= f'Facility Ownership',
+        xaxis_title= 'Facility Ownership',
         yaxis_title='Counts',
-        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f', showgrid=False),
+        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
         height=500,
@@ -426,6 +471,7 @@ def vf_plot_fo(grouped_counts):
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
 
+   
     return fig
 
 def vf_plot_ft(grouped_counts):
@@ -448,21 +494,35 @@ def vf_plot_ft(grouped_counts):
     grouped_sums.sort_values(by='txcurr_vf', inplace=True)
 
     # Add bars for txcurr_ndr and txcurr_pr
-    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_ndr'], name='Txcurr NDR', yaxis='y'))
-    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_pr'], name='Txcurr PR', yaxis='y'))
+    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_ndr'], name='Txcurr NDR', yaxis='y', text=grouped_sums['txcurr_ndr'], textposition='auto'))
+    fig.add_trace(go.Bar(x=grouped_sums.index, y=grouped_sums['txcurr_pr'], name='Txcurr PR', yaxis='y', text=grouped_sums['txcurr_pr'], textposition='auto'))
 
     # Add txcurr_vf as a line plot on a secondary y-axis
     fig.add_trace(go.Scatter(x=grouped_sums.sort_values('txcurr_vf').index, 
                          y=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'], 
-                         name='Txcurr VF (%)', yaxis='y2', mode='lines+markers', 
-                         marker=dict(size=15), hovertemplate='%{y:.2f}%'))
+                         name='Txcurr VF (%)', yaxis='y2', mode='markers', 
+                         marker=dict(size=17), text=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'], textposition='top center', 
+                         hovertemplate='%{y:.2f}%<br><extra></extra>'#hovertemplate='%{y:.2f}%'
+                         ))
+    # Add annotations to the marker points
+    for i in range(len(grouped_sums)):
+        fig.add_annotation(x=grouped_sums.sort_values('txcurr_vf').index[i],
+                           y=grouped_sums.sort_values('txcurr_vf')['txcurr_vf'][i],
+                           text=f"{grouped_sums.sort_values('txcurr_vf')['txcurr_vf'][i]:.2f}%",
+                           xanchor='center',
+                           yanchor='bottom',
+                           showarrow=False,
+                           font=dict(color='black', size=12),
+                           xshift=0,
+                           yshift=10,
+                           yref='y2')
 
     # Customize the layout
     fig.update_layout(
-        title=f'Verification Factor by Facility Type',
-        xaxis_title= f'Facility Type',
+        title='Verification Factor by Facility Type',
+        xaxis_title= 'Facility Type',
         yaxis_title='Counts',
-        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f', showgrid=False),
+        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
         height=500,
@@ -471,8 +531,8 @@ def vf_plot_ft(grouped_counts):
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
 
+   
     return fig
-
 
 
 def bubble_chart(df):
@@ -486,6 +546,9 @@ def bubble_chart(df):
                       yaxis_title="TXCURR_NDR",
                       coloraxis_colorbar=dict(title="Verification Factor"),
                       height=600)
+    
+    fig.update_xaxes(tickformat=".2%")
+    fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
     return fig
 
 def map_figure_ch(df):
@@ -556,3 +619,22 @@ def bubble_chart_age_sex(filtered_df):
     )
     
     return fig
+
+
+def bar_chart_facility(df):
+    df_sorted = df.sort_values('txcurr_vf')
+    fig = px.bar(df_sorted, x='txcurr_vf', y='facility_name', #color='txcurr_vf',
+                 orientation='h', hover_name="facility_name", text=df_sorted['txcurr_pr']/df_sorted['txcurr_ndr']*100,
+                 hover_data=['state', 'lga', 'facility_type', 'facility_ownership', 'funder'],
+                 color_continuous_scale=px.colors.diverging.RdYlGn[::], color_continuous_midpoint=0.5)
+    fig.update_traces(textposition='outside', texttemplate='%{text:.2f}%')
+    fig.update_layout(title='Verification Factor by Facility',
+                      xaxis_title='Verification Factor (%)',
+                      yaxis_title='Facility',
+                      coloraxis_colorbar=dict(title='Verification Factor (%)'),
+                      height=800,
+                      font=dict(size=14))
+    fig.update_xaxes(tickformat=".2%")
+    fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
+    return fig
+

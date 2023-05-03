@@ -77,12 +77,14 @@ layout = dbc.Container([
     ]),
      dbc.Row([
         dbc.Col(dcc.Graph(id='vf_map'), width=12),
-        #dbc.Col(dcc.Graph(id='vf_bubble'), width=12),
     ]),
     html.Br(),
     dbc.Row([
-        #dbc.Col(dcc.Graph(id='vf_map'), width=12),
         dbc.Col(dcc.Graph(id='vf_bubble'), width=12),
+    ]),
+    html.Br(),
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='vf_facility'), width=12),
     ]),
     html.Br(),
     dbc.Row([

@@ -211,7 +211,8 @@ def init_dash(app):
         Output('vf_map', 'figure'),
         Output('vf_bubble', 'figure'),
         Output('vf_chart3', 'figure'),
-        Output('vf_chart2', 'figure')
+        Output('vf_chart2', 'figure'),
+        Output('vf_facility', 'figure')
         ],
         [Input('state-filter1', 'value'),
         Input('lga-filter1', 'value'),
@@ -239,7 +240,7 @@ def init_dash(app):
             filtered_df = filtered_df[filtered_df['age_group'].isin(age_group_filter1)]
 
         
-        return vf_plot_funder(filtered_df), vf_plot_ip(filtered_df), map_figure(filtered_df), bubble_chart(filtered_df), vf_plot_fo(filtered_df), vf_plot_ft(filtered_df)
+        return vf_plot_funder(filtered_df), vf_plot_ip(filtered_df), map_figure(filtered_df), bubble_chart(filtered_df), vf_plot_fo(filtered_df), vf_plot_ft(filtered_df), bar_chart_facility(filtered_df)
     
     return app
 

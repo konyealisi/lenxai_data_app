@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Numeric, ForeignKey, Column, Integer, String, Date, Boolean
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import event
+from datetime import datetime
 
 db_user = os.environ.get('DB_USER_ndqadata')
 db_password = os.environ.get('DB_PASSWORD_ndqadata')
@@ -36,8 +37,8 @@ class DataEntry(db.Model):
     tx_age = db.Column(db.Integer, nullable=True)  # Treatment age, how long the client has been on trea
     dregimen_po = db.Column(db.String(100), nullable=True)
     dregimen_pw = db.Column(db.String(100), nullable=True)
-    dregimen_po_correct = db.Column(db.Boolean, nullable=True)
-    dregimen_pw_correct = db.Column(db.Boolean, nullable=True)
+    dregimen_po_correct = db.Column(db.String(5), nullable=True)
+    dregimen_pw_correct = db.Column(db.String(5), nullable=True)
     mrefill_ll = db.Column(db.Integer, nullable=True)
     mrefill_po = db.Column(db.Integer, nullable=True)
     mrefill_pw = db.Column(db.Integer, nullable=True)
@@ -47,12 +48,12 @@ class DataEntry(db.Model):
     laspud_ll = db.Column(db.Date, nullable=True)
     laspud_po = db.Column(db.Date, nullable=True)
     laspud_pw = db.Column(db.Date, nullable=True)
-    laspud_po_correct = db.Column(db.Boolean, nullable=True)
-    laspud_pw_correct = db.Column(db.Boolean, nullable=True)
+    laspud_po_correct = db.Column(db.String(5), nullable=True)
+    laspud_pw_correct = db.Column(db.String(5), nullable=True)
     quantityd_po = db.Column(db.Integer, nullable=True)
     quantityd_pw = db.Column(db.Integer, nullable=True)
-    quantityd_po_correct = db.Column(db.Boolean, nullable=True)
-    quantityd_pw_correct = db.Column(db.Boolean, nullable=True)
+    quantityd_po_correct = db.Column(db.String(5), nullable=True)
+    quantityd_pw_correct = db.Column(db.String(5), nullable=True)
     pharm_doc = db.Column(db.String(5), nullable=True)
     client_folder = db.Column(db.String(5), nullable=True)
     entry_datetime_cr = db.Column(db.DateTime, nullable=True)
@@ -60,7 +61,15 @@ class DataEntry(db.Model):
 
    
     def to_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        result = {}
+        for c in self.__table__.columns:
+            value = getattr(self, c.name)
+            if isinstance(value, datetime):
+                value = value.strftime('%Y-%m-%d')
+            elif isinstance(value, int):
+                value = str(value)
+            result[c.name] = value
+        return result
 
 # User class
 # This define the Use database - in postgres
