@@ -40,49 +40,51 @@
     {% include "navbar.html" %}
     
     <div class="container">
-        <div class="spacing-div"></div>
         <div class="d-flex justify-content-center">
             <h1 class="mb-3">Enter Pharmarcy Record</h1>
         </div>
         <form method="POST">
             {{ form.hidden_tag() }}
-            <table>
-                <!-- Other table rows here -->
-                <tr>
-                    <th>Facility</th>
-                    <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
-                </tr>
-                <tr>
-                    <th>Client ID</th>
-                    <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
-                </tr>
-                <!-- Other table rows here -->
-            </table>
-            <div class="spacing-div"></div>
-            <div class="spacing-div"></div>
+            <div>
+                <div style="display: inline-block;">
+                    <table>
+                        <tr>
+                            <th>Facility</th>
+                            <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="display: inline-block;">
+                    <table>
+                        <tr>
+                            <th>Client ID</th>
+                            <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
             <div class="form-group">
                 <label for="{{ form.dregimen_pw.id }}">Drug Regimen Pharmacy Record</label>
-                {{ form.dregimen_pw(class="form-control") }}
+                {{ form.dregimen_pw(class="form-control") }} <span id="dregimen_pw" class="ml-5"><b>(Available Record: <span id="dregimen_pw_value">-----</b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.mrefill_pw.id }}">Months of Refill Pharmacy Record</label>
-                {{ form.mrefill_pw(class="form-control") }}
+                {{ form.mrefill_pw(class="form-control") }} <span id="mrefill_pw" class="ml-5"><b>(Available Record: <span id="mrefill_pw_value">-----</b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.laspud_pw.id }}">Last pickup Date Pharmacy Record</label>
-                {{ form.laspud_pw(class="form-control") }}
+                {{ form.laspud_pw(class="form-control") }} <span id="laspud_pw" class="ml-5"><b>(Available Record: <span id="laspud_pw_value">-----</b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.quantityd_pw.id }}">Quantity of Drug Dispenced Pharmacy Record</label>
-                {{ form.quantityd_pw(class="form-control") }}
+                {{ form.quantityd_pw(class="form-control") }} <span id="quantityd_pw" class="ml-5"><b>(Available Record: <span id="quantityd_pw_value">-----</b></span>)</span>
             </div>
-            <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.pharm_doc.id }}">Pharmacy Record Sighted?</label>
-                {{ form.pharm_doc() }}
+                {{ form.pharm_doc() }} <span id="pharm_doc" class="ml-5"><b>(Available Record: <span id="pharm_doc_value">-----</b></span>)</span>
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
@@ -117,6 +119,20 @@
                     clientIdSelect.selectpicker('refresh');
                 });
             });
+
+            $('select[name="client_id"]').change(function() {
+            let clientId = $(this).val();
+            $.getJSON('/get_client_data', {
+                client_id: clientId
+            }, function(data) {
+                console.log("Received data:", data);  // Debugging line
+                $('#dregimen_pw_value').text(data.dregimen_pw || '----');
+                $('#mrefill_pw_value').text(data.mrefill_pw || '----');
+                $('#laspud_pw_value').text(data.laspud_pw || '----');
+                $('#quantityd_pw_value').text(data.quantityd_pw || '----');
+                $('#pharm_doc_value').text(data.pharm_doc || '----');
+            });
+        });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
 </body>

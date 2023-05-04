@@ -48,6 +48,7 @@ merged_df['curr_pr'] = merged_df['curr_pr'].str.lower().str.strip()
 vf_df = merged_df[(merged_df['curr_ll'] == 'yes') & (merged_df['curr_pr'].isin(['yes', 'no']))]
 df =vf_df.copy()
 df['txcurr_ndr'] = (df['curr_ll'] == 'yes').astype(int)
+df['txcurr_cr'] = (df['curr_cr'] == 'yes').astype(int)
 df['txcurr_pr'] = (df['curr_pr'] == 'yes').astype(int)
 df['txcurr_vf'] = (df['curr_pr'] == 'yes').astype(int)
 # print('vf_df DataFrame:')
@@ -57,11 +58,12 @@ df['longitude'] = df['longitude'].fillna(0)
 grouped_df = df.groupby(['state', 'lga', 'facility_name', 'facility_type', 'facility_ownership', 'implementing_partner', 'funder', 'latitude', 'longitude'])
 grouped_counts = grouped_df.agg(
     txcurr_ndr=('txcurr_ndr', 'count'),
+    txcurr_cr=('txcurr_cr', 'sum'),
     txcurr_pr=('txcurr_pr', 'sum'),#lambda x: (x == 'yes').sum()),
     txcurr_vf=('txcurr_vf', 'mean')
 ).reset_index()
-# print('grouped_counts DataFrame:')
-# print(grouped_counts)
+print('grouped_counts DataFrame:')
+print(grouped_counts)
 df1 = pd.DataFrame(grouped_counts)
 
 def init_dash(app):

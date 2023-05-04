@@ -1,3 +1,6 @@
-﻿Country,State,LGA,Latitude,Longiude,Facility Name,Facility type,Facility Ownership,Implementing Partner,Funder
-Nigeria,Kano,Nasarawa,,,"Kano State One Stop Shop (OSS), Nasarawa",Secondary,State,AHNI,Global Fund
-Nigeria,Abuja,AMAC,,,FMC Gwarimpa,Secondary,Federal,IHVN,CDC
+﻿Country,State,Region,LGA,Latitude,Longiude,Facility Name,Facility type,Facility Ownership,Implementing Partner,Funder
+Nigeria,Kano,Northwest,Nasarawa,,,"Kano State One Stop Shop (OSS), Nasarawa",Secondary,State,AHNI,Global Fund
+Nigeria,Abuja,Northcentral,AMAC,,,FMC Gwarimpa,Secondary,Federal,IHVN,CDC
+Nigeria,Oyo,Southwest,Idadan North,,,Oluyoro Hospital,Seconday,Faith,CCFN,DOD
+Nigeria,Lagos,Southwest,Lagos Island,,,Island Maternity Hospital,Primary,State,FHI 360,USAID
+Nigeria,Imo,Southeast,Owerri West,,,FMC Owerri,Tetiary,Federal,CRS,USAID

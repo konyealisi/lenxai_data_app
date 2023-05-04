@@ -40,48 +40,52 @@
     {% include "navbar.html" %}
     
     <div class="container">
-        <div class="spacing-div"></div>
         <div class="d-flex justify-content-center">
             <h1 class="mb-3">Enter Client Record</h1>
         </div>
         <form method="POST">
             {{ form.hidden_tag() }}
-            <table>
-                <!-- Other table rows here -->
-                <tr>
-                    <th>Facility</th>
-                    <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
-                </tr>
-                <tr>
-                    <th>Client ID</th>
-                    <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
-                </tr>
-                <!-- Other table rows here -->
-            </table>
-            <div class="spacing-div"></div>
+            
+            <div>
+                <div style="display: inline-block;">
+                    <table>
+                        <tr>
+                            <th>Facility</th>
+                            <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="display: inline-block;">
+                    <table>
+                        <tr>
+                            <th>Client ID</th>
+                            <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
             <div class="form-group">
                 <label for="{{ form.dregimen_po.id }}">Drug Regimen Client's Record (Client's Folder)</label>
-                {{ form.dregimen_po(class="form-control") }}
+                {{ form.dregimen_po(class="form-control") }} <span id="dregimen_po" class="ml-5"><b>(Available Record: <span id="dregimen_po_value">-----</b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.mrefill_po.id }}">Months of Refill Client's Record</label>
-                {{ form.mrefill_po(class="form-control") }}
+                {{ form.mrefill_po(class="form-control") }} <span id="mrefill_po" class="ml-5"><b>(Available Record: <span id="mrefill_po_value">-----</b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.laspud_po.id }}">Last pickup Date Client's Record</label>
-                {{ form.laspud_po(class="form-control") }}
+                {{ form.laspud_po(class="form-control") }} <span id="laspud_po" class="ml-5"><b>(Available Record: <span id="laspud_po_value">-----</b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.quantityd_po.id }}">Quantity of Drug Dispenced Client's Record</label>
-                {{ form.quantityd_po(class="form-control") }}
+                {{ form.quantityd_po(class="form-control") }} <span id="quantityd_po" class="ml-5"><b>(Available Record: <span id="quantityd_po_value">-----</b></span>)</span>
             </div>
-            <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.client_folder.id }}">Client Folder Sighted?</label>
-                {{ form.client_folder() }}
+                {{ form.client_folder() }} <span id="client_folder" class="ml-5"><b>(Available Record: <span id="client_folder_value">-----</b></span>)</span>
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
@@ -116,6 +120,20 @@
                     clientIdSelect.selectpicker('refresh');
                 });
             });
+
+            $('select[name="client_id"]').change(function() {
+            let clientId = $(this).val();
+            $.getJSON('/get_client_data', {
+                client_id: clientId
+            }, function(data) {
+                console.log("Received data:", data);  // Debugging line
+                $('#dregimen_po_value').text(data.dregimen_po || '----');
+                $('#mrefill_po_value').text(data.mrefill_po || '----');
+                $('#laspud_po_value').text(data.laspud_po || '----');
+                $('#quantityd_po_value').text(data.quantityd_po || '----');
+                $('#client_folder_value').text(data.client_folder || '----');
+            });
+        });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
 </body>

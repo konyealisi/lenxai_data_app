@@ -1,7 +1,7 @@
 # utils.py
 from wtforms.validators import  ValidationError
 from models import User, DataEntry, Facility
-from datetime import datetime, timedelta
+from datetime import timedelta, date
 import plotly.express as px
 import plotly.graph_objs as go
 from dash import dash_table
@@ -77,6 +77,34 @@ def facility_exists(facility_name):
 #     else:
 #         return 'no'
     
+# def curr(last_pickup_date, months_of_arv_refill, cutoff, grace_period):
+#     if last_pickup_date is None:
+#         return None  # or any default value you want to return when last_pickup_date is None
+
+#     qdrugs = months_of_arv_refill*30
+#     months_of_arv_refill_t = timedelta(days=qdrugs)
+
+#     grace_period_timedelta = timedelta(days=grace_period)
+
+#     if last_pickup_date + months_of_arv_refill_t + grace_period_timedelta >= cutoff: #if last_pickup_date + months_of_arv_refill_t + grace_period_timedelta >= pd.Timestamp(cutoff): #
+#         return "yes"
+#     else:
+#         return "no"
+# def curr(last_pickup_date, months_of_arv_refill, cutoff, grace_period):
+#     if last_pickup_date is None:
+#         return None  # or any default value you want to return when last_pickup_date is None
+
+#     qdrugs = months_of_arv_refill*30
+#     months_of_arv_refill_t = timedelta(days=qdrugs)
+
+#     grace_period_timedelta = timedelta(days=grace_period)
+
+#     if pd.Timestamp(last_pickup_date) + months_of_arv_refill_t + grace_period_timedelta >= pd.Timestamp(cutoff).date():
+#         return "yes"
+#     else:
+#         return "no"
+
+
 def curr(last_pickup_date, months_of_arv_refill, cutoff, grace_period):
     if last_pickup_date is None:
         return None  # or any default value you want to return when last_pickup_date is None
@@ -86,11 +114,10 @@ def curr(last_pickup_date, months_of_arv_refill, cutoff, grace_period):
 
     grace_period_timedelta = timedelta(days=grace_period)
 
-    if last_pickup_date + months_of_arv_refill_t + grace_period_timedelta >= cutoff:
-        return "Yes"
+    if last_pickup_date + months_of_arv_refill_t + grace_period_timedelta >= pd.Timestamp(cutoff).date():
+        return "yes"
     else:
-        return "No"
-
+        return "no"
 
 def get_facility_names():
     facilities = Facility.query.with_entities(Facility.facility_name).all()
@@ -174,7 +201,7 @@ def bar_chart_age_sex(filtered_df):
 
     fig = go.Figure()
 
-    for sex, direction in [('Male', -1), ('Female', 1)]:
+    for sex, direction in [('male', -1), ('female', 1)]:
         fig.add_trace(go.Bar(y=merged_grouped_data['age_group'],
                              x=direction * merged_grouped_data.get(sex, [0]*len(merged_grouped_data)),#[sex],
                              name=sex,
@@ -215,7 +242,7 @@ def bar_chart_age_sex1(filtered_df):
 
     fig = go.Figure()
 
-    for sex, direction in [('Male', -1), ('Female', 1)]:
+    for sex, direction in [('male', -1), ('female', 1)]:
         fig.add_trace(go.Bar(y=merged_grouped_data['age_group'],
                              x=direction * merged_grouped_data.get(sex, [0]*len(merged_grouped_data)),#[sex],
                              name=sex,

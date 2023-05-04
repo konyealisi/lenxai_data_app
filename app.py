@@ -169,13 +169,13 @@ def download_csv():
     # Create a CSV file in memory
     csv_file = StringIO()
     fieldnames = ['facility_name','id', 'state', 'lga', 'latitude', 'longitude','client_id','client_name','sex','age','tx_age','dregimen_ll','mrefill_ll','laspud_ll','curr_ll',
-                    'userid_cr','dregimen_po','mrefill_po','laspud_po','quantityd_po','curr_cr','client_folder','dregimen_po_correct','laspud_po_correct','quantityd_po_correct', 
-                        'userid_pr','dregimen_pw','mrefill_pw','laspud_pw','quantityd_pw','curr_pr','pharm_doc', 'dregimen_pw_correct','laspud_pw_correct','quantityd_pw_correct']
+                    'userid_cr', 'entry_datetime_cr', 'dregimen_po','mrefill_po','laspud_po','quantityd_po','curr_cr','client_folder','dregimen_po_correct','laspud_po_correct','quantityd_po_correct', 
+                        'userid_pr', 'entry_datetime_pr', 'dregimen_pw','mrefill_pw','laspud_pw','quantityd_pw','curr_pr','pharm_doc', 'dregimen_pw_correct','laspud_pw_correct','quantityd_pw_correct']
     
     # Define user-friendly headers
     friendly_headers = ['Health Facility', 'Facility ID', 'State', 'LGA', 'Latitude', 'Longitude', 'Client ID', 'Client Name', 'Sex', 'Age', 'Tx Age (months)', 'Drug Regimen NDR', 'Month of Refill NDR', 'LAST Pick Up Date NDR', 'is Current on Tx NDR',
-                        'User ID CR', 'Drug Regimen CR', 'Month of Refill CR', 'LAST Pick Up Date CR', 'Drug Quantity CR', 'is Current on Tx CR', 'Client Folder Sighted?', 'Drug Regimen CR Correct?', 'LAST Pick Up Date CR Correct?', 'Drug Quantity CR Correct?',
-                        'User ID PR', 'Drug Regimen PR', 'Month of Refill PR', 'LAST Pick Up Date PR', 'Drug Quantity PR', 'is Current on Tx PR', 'Pharmacy Documentation Sighted?', 'Drug Regimen PR Correct?', 'LAST Pick Up Date PR Correct?', 'Drug Quantity PR Correct?']
+                        'User ID CR', 'Data Entry Time CR', 'Drug Regimen CR', 'Month of Refill CR', 'LAST Pick Up Date CR', 'Drug Quantity CR', 'is Current on Tx CR', 'Client Folder Sighted?', 'Drug Regimen CR Correct?', 'LAST Pick Up Date CR Correct?', 'Drug Quantity CR Correct?',
+                        'User ID PR', 'Data Entry Time PR', 'Drug Regimen PR', 'Month of Refill PR', 'LAST Pick Up Date PR', 'Drug Quantity PR', 'is Current on Tx PR', 'Pharmacy Documentation Sighted?', 'Drug Regimen PR Correct?', 'LAST Pick Up Date PR Correct?', 'Drug Quantity PR Correct?']
     
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames, extrasaction='ignore')
     writer.writerow(dict(zip(fieldnames, friendly_headers)))
@@ -258,6 +258,7 @@ def upload_facility():
 
             df.columns = df.columns.str.replace(r'\s*[\(\[].*?[\)\]]|\?', '', regex=True)
             print("Column names after processing:\n", df.columns)
+            df = df.applymap(lambda s: s.lower() if isinstance(s, str) else s)
 
             facility_mapping = {
                 'Facility Name': 'facility_name',
@@ -345,6 +346,9 @@ def upload_data():
             #df['next'] = df['last_pickup_date'] + pd.to_timedelta(df['months_of_arv_refill'] * 30, unit='days')
 
             df['curr_ll'] = df.apply(lambda row: curr(row['last_pickup_date'], row['months_of_arv_refill'], cutoff, grace_period), axis=1)
+
+            # lower all values in the DataFrame
+            df = df.applymap(lambda s: s.lower() if isinstance(s, str) else s)
         
 
             # Retrieve the list of facility names from the Facility table
@@ -397,7 +401,7 @@ def upload_data():
                 return sampled_chunks
 
             # Group the DataFrame by facility and perform the sampling within each group
-            sampled_df = df.groupby('facility').apply(sample_group).reset_index(drop=True)
+            sampled_df = df.groupby('facility', group_keys=True).apply(sample_group).reset_index(drop=True) #sampled_df = df.groupby('facility').apply(sample_group).reset_index(drop=True)
 
             print(f'Total records after samplling {len(sampled_df)}')
 
@@ -506,7 +510,7 @@ def client_record():
        
         if not client_record:
                 flash('Client record not found.', 'danger')
-                return redirect(url_for('landing'))
+                return redirect(url_for('client_record'))
         
         if not client_record.dregimen_po:
             client_record.dregimen_po = form.dregimen_po.data
@@ -529,7 +533,7 @@ def client_record():
         db.session.commit()
 
         flash('Client record updated successfully.', 'success')
-        return redirect(url_for('landing'))
+        return redirect(url_for('client_record'))
     
 
     return render_template('facility.html', form=form)
@@ -578,7 +582,7 @@ def pharm_record():
        
         if not client_record:
                 flash('Client record not found.', 'danger')
-                return redirect(url_for('landing'))
+                return redirect(url_for('pharm_record'))
         
         if not client_record.dregimen_pw:
             client_record.dregimen_pw = form.dregimen_pw.data
@@ -601,7 +605,7 @@ def pharm_record():
         db.session.commit()
         
         flash('Client record updated successfully.', 'success')
-        return redirect(url_for('landing'))
+        return redirect(url_for('pharm_record'))
     
 
     return render_template('pharmrecord.html', form=form)
@@ -686,54 +690,54 @@ def get_client_data():
 
 
 
-@app.cli.command('drop-data-entry-table')
-#@requires_roles('sysadmin')
-def drop_data_entry_table():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        table_names = inspector.get_table_names()
-        print(table_names)
-        if 'data_entry' in table_names:
-            sql = text('DROP TABLE data_entry;')
-            result = db.session.execute(sql)
-            db.session.commit()
-            print("Dropped table 'data_entry' successfully.")
-        else:
-            print("Table not found.")
-# flask drop-data-entry-table
+# @app.cli.command('drop-data-entry-table')
+# #@requires_roles('sysadmin')
+# def drop_data_entry_table():
+#     with app.app_context():
+#         inspector = inspect(db.engine)
+#         table_names = inspector.get_table_names()
+#         print(table_names)
+#         if 'data_entry' in table_names:
+#             sql = text('DROP TABLE data_entry;')
+#             result = db.session.execute(sql)
+#             db.session.commit()
+#             print("Dropped table 'data_entry' successfully.")
+#         else:
+#             print("Table not found.")
+# # flask drop-data-entry-table
 
 
-@app.cli.command('drop-facility_name_item-table')
-#@requires_roles('sysadmin')
-def drop_data_facility_name_table():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        table_names = inspector.get_table_names()
-        print(table_names)
-        if 'facility_name_item' in table_names:
-            sql = text('DROP TABLE facility_name_item;')
-            result = db.session.execute(sql)
-            db.session.commit()
-            print("Dropped table 'facility_name_item' successfully.")
-        else:
-            print("Table not found.")
-# flask drop-facility_name_item-table
+# @app.cli.command('drop-facility_name_item-table')
+# #@requires_roles('sysadmin')
+# def drop_data_facility_name_table():
+#     with app.app_context():
+#         inspector = inspect(db.engine)
+#         table_names = inspector.get_table_names()
+#         print(table_names)
+#         if 'facility_name_item' in table_names:
+#             sql = text('DROP TABLE facility_name_item;')
+#             result = db.session.execute(sql)
+#             db.session.commit()
+#             print("Dropped table 'facility_name_item' successfully.")
+#         else:
+#             print("Table not found.")
+# # flask drop-facility_name_item-table
 
-@app.cli.command('drop-client_id_item-table')
-#@requires_roles('sysadmin')
-def drop_data_client_id_table():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        table_names = inspector.get_table_names()
-        print(table_names)
-        if 'client_id_item' in table_names:
-            sql = text('DROP TABLE client_id_item;')
-            result = db.session.execute(sql)
-            db.session.commit()
-            print("Dropped table 'client_id_item' successfully.")
-        else:
-            print("Table not found.")
-# flask drop-client_id_item-table
+# @app.cli.command('drop-client_id_item-table')
+# #@requires_roles('sysadmin')
+# def drop_data_client_id_table():
+#     with app.app_context():
+#         inspector = inspect(db.engine)
+#         table_names = inspector.get_table_names()
+#         print(table_names)
+#         if 'client_id_item' in table_names:
+#             sql = text('DROP TABLE client_id_item;')
+#             result = db.session.execute(sql)
+#             db.session.commit()
+#             print("Dropped table 'client_id_item' successfully.")
+#         else:
+#             print("Table not found.")
+# # flask drop-client_id_item-table
 
 @app.cli.command('drop-user-table')
 #@requires_roles('sysadmin')
@@ -751,37 +755,73 @@ def drop_user_table():
             print("Table not found.")
 # flask drop-user-table
 
-@app.cli.command('drop-facility-table')
-#@requires_roles('sysadmin')
-def drop_facility_table():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        table_names = inspector.get_table_names()
-        print(table_names)
-        if 'facility' in table_names:
-            sql = text('DROP TABLE facility;')
-            result = db.session.execute(sql)
-            db.session.commit()
-            print("Dropped table 'facility' successfully.")
-        else:
-            print("Table not found.")
-# flask drop-facility-table
+# @app.cli.command('drop-data-entry-table')
+# def drop_data_entry_table():
+#     with app.app_context():
+#         inspector = inspect(db.engine)
+#         table_names = inspector.get_table_names()
+#         print(table_names)
+#         if 'data_entry' in table_names:
+#             with db.engine.connect() as conn:
+#                 # drop foreign key constraint first
+#                 conn.execute('ALTER TABLE other_table DROP CONSTRAINT fk_name_data_entry;')
+#             db.drop_all(bind=None, tables=[DataEntry.__table__])
+#             print("Dropped table 'data_entry' successfully.")
+#         else:
+#             print("Table not found.")
+# # flask drop-data-entry-table
 
-@app.cli.command('drop-user_id_item-table')
-#@requires_roles('sysadmin')
-def drop_data_user_id_table():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        table_names = inspector.get_table_names()
-        print(table_names)
-        if 'user_id_item' in table_names:
-            sql = text('DROP TABLE user_id_item;')
-            result = db.session.execute(sql)
-            db.session.commit()
-            print("Dropped table 'user_id_item' successfully.")
-        else:
-            print("Table not found.")
-# flask drop-user_id_item-table
+# @app.cli.command('drop-facility-table')
+# #@requires_roles('sysadmin')
+# def drop_facility_table():
+#     with app.app_context():
+#         inspector = inspect(db.engine)
+#         table_names = inspector.get_table_names()
+#         print(table_names)
+#         if 'facility' in table_names:
+#             # Drop foreign key constraint from data_entry table that references facility table
+#             db.engine.execute('ALTER TABLE data_entry DROP CONSTRAINT fk_data_entry_facility;')
+            
+#             # Drop facility table
+#             sql = text('DROP TABLE facility;')
+#             result = db.session.execute(sql)
+#             db.session.commit()
+#             print("Dropped table 'facility' successfully.")
+#         else:
+#             print("Table not found.")
+# flask drop-facility-table           
+
+# @app.cli.command('drop-facility-table')
+# #@requires_roles('sysadmin')
+# def drop_facility_table():
+#     with app.app_context():
+#         inspector = inspect(db.engine)
+#         table_names = inspector.get_table_names()
+#         print(table_names)
+#         if 'facility' in table_names:
+#             sql = text('DROP TABLE facility;')
+#             result = db.session.execute(sql)
+#             db.session.commit()
+#             print("Dropped table 'facility' successfully.")
+#         else:
+#             print("Table not found.")
+# # flask drop-facility-table
+
+# @app.cli.command('drop-user_id_item-table')
+# #@requires_roles('sysadmin')
+# def drop_data_user_id_table():
+#     with app.app_context():
+#         inspector = inspect(db.engine)
+#         table_names = inspector.get_table_names()
+#         print(table_names)
+#         if 'user_id_item' in table_names:
+#             sql = text('DROP TABLE user_id_item;')
+#             result = db.session.execute(sql)
+#             db.session.commit()
+#             print("Dropped table 'user_id_item' successfully.")
+#         else:
+#             print("Table not found.")
+# # flask drop-user_id_item-table
 
 @app.context_processor
 def inject_current_year():
@@ -801,6 +841,73 @@ dash_app = init_dash(app)
 @login_required
 def render_dashboard():
     return dash_app.index() 
+
+
+
+@app.cli.command('drop-data-entry-table')
+#@requires_roles('sysadmin')
+def drop_data_entry_table():
+    with app.app_context():
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        print(table_names)
+        if 'data_entry' in table_names:
+            sql = text('DROP TABLE data_entry;')
+            try:
+                a = text('ALTER TABLE facility DROP CONSTRAINT fk_facility_name_data_entry;')
+                result = db.session.execute(a)
+                db.session.commit()
+                print("Dropped foreign key constraint 'fk_facility_name_data_entry' from 'facility' table successfully.")
+            except Exception as e:
+                db.session.rollback()
+                print("Error dropping foreign key constraint:", e)
+            result = db.session.execute(sql)
+            db.session.commit()
+            print("Dropped table 'data_entry' successfully.")
+        else:
+            print("Table not found.")
+# flask drop-data-entry-table
+
+@app.cli.command('drop-facility-table')
+#@requires_roles('sysadmin')
+def drop_facility_table():
+    with app.app_context():
+        inspector = inspect(db.engine)
+        table_names = inspector.get_table_names()
+        print(table_names)
+        if 'facility' in table_names:
+            sql = text('DROP TABLE facility CASCADE;')
+            try:
+                db.session.execute(sql)
+                db.session.commit()
+                print("Dropped table 'facility' successfully.")
+            except Exception as e:
+                print("Error dropping table 'facility':", e)
+        else:
+            print("Table not found.")
+
+
+# @app.cli.command('drop-facility-table')
+# #@requires_roles('sysadmin')
+# def drop_facility_table():
+#     with app.app_context():
+#         inspector = inspect(db.engine)
+#         table_names = inspector.get_table_names()
+#         print(table_names)
+#         if 'facility' in table_names:
+#             sql = text('DROP TABLE facility;')
+#             try:
+#                 db.session.execute('ALTER TABLE data_entry DROP CONSTRAINT data_entry_facility_name_fkey;')
+#                 db.session.commit()
+#             except Exception as e:
+#                 db.session.rollback()
+#                 print("Error dropping foreign key constraint:", e)
+#             result = db.session.execute(sql)
+#             db.session.commit()
+#             print("Dropped table 'facility' successfully.")
+#         else:
+#             print("Table not found.")
+# flask drop-facility-table
 
 
 if __name__ == '__main__':

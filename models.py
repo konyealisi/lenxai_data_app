@@ -15,6 +15,9 @@ db_host = os.environ.get('DB_HOST_ndqadata')
 db_name = os.environ.get('DB_NAME_ndqadata') 
 
 print(f' Database name: \t {db_name}')
+# print(f' Database user: \t {db_user}')
+# print(f' Database db_password: \t {db_password}')
+# print(f' Database host: \t {db_host}')
 
 db = SQLAlchemy()
 
