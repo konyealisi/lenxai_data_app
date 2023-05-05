@@ -8,13 +8,25 @@ from sqlalchemy import Numeric, ForeignKey, Column, Integer, String, Date, Boole
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import event
 from datetime import datetime
+import json
 
-db_user = os.environ.get('DB_USER_ndqadata')
-db_password = os.environ.get('DB_PASSWORD_ndqadata')
-db_host = os.environ.get('DB_HOST_ndqadata')
-db_name = os.environ.get('DB_NAME_ndqadata') 
 
-print(f' Database name: \t {db_name}')
+
+
+# with open('C:/Users/konye/Documents/mydoc.json') as f:
+#     secrets = json.load(f)
+
+# db_user = secrets['db_user']
+# db_password = secrets['db_password']
+# db_host = secrets['db_host']
+# db_name = secrets['db_name']
+
+# db_user = os.environ.get('DB_USER_ndqadata')
+# db_password = os.environ.get('DB_PASSWORD_ndqadata')
+# db_host = os.environ.get('DB_HOST_ndqadata')
+# db_name = os.environ.get('DB_NAME_ndqadata') 
+
+# print(f' Database name: \t {db_name}')
 # print(f' Database user: \t {db_user}')
 # print(f' Database db_password: \t {db_password}')
 # print(f' Database host: \t {db_host}')

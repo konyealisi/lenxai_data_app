@@ -46,34 +46,38 @@
         </div>
         <form method="POST">
             {{ form.hidden_tag() }}
-            <table>
-                <!-- Other table rows here -->
-                <tr>
-                    <th>Facility</th>
-                    <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
-                </tr>
-                <tr>
-                    <th>Client ID</th>
-                    <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
-                </tr>
-                <!-- Other table rows here -->
-            </table>
-            <div class="spacing-div"></div>
+            <div>
+                <div style="display: inline-block;">
+                    <table>
+                        <tr>
+                            <th>Facility</th>
+                            <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="display: inline-block;">
+                    <table>
+                        <tr>
+                            <th>Client ID</th>
+                            <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.dregimen_po_correct.id }}">Is Client's Drug Regimen Record Correct?</label>
-                {{ form.dregimen_po_correct() }} <span id="dregimen_po" class="ml-2">(Database value: <span id="dregimen_po_value">Not available</span>)</span>
+                {{ form.dregimen_po_correct() }} <span id="dregimen_po" class="ml-5"><b>(Available Record: <span id="dregimen_po_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
-            
             <div class="form-group">
                 <label for="{{ form.laspud_po_correct.id }}">Is Client's Last Drug Pickup Date Correct?</label>
-                {{ form.laspud_po_correct() }}   <span id="laspud_po" class="ml-2">(Database value: <span id="laspud_po_value">Not available</span>)</span>
+                {{ form.laspud_po_correct() }}   <span id="laspud_po" class="ml-5"><b>(Available Record: <span id="laspud_po_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.quantityd_po_correct.id }}">Is Client's Drug Quantity Dispensed Correct?</label>
-                {{ form.quantityd_po_correct() }} <span id="quantityd_po" class="ml-2">(Database value: <span id="quantityd_po_value">Not available</span>)</span>
+                {{ form.quantityd_po_correct() }} <span id="quantityd_po" class="ml-5"><b>(Available Record: <span id="quantityd_po_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             
@@ -105,24 +109,46 @@
                 $.each(data, function(index, client) {
                     clientIdSelect.append(
                         $('<option></option>').attr('value', client[0]).text(client[1])
-                        );
-                    });
-                    clientIdSelect.selectpicker('refresh');
+                    );
                 });
-            });
+                clientIdSelect.selectpicker('refresh');
 
+                // Select the first client ID by default if available
+                if (data.length > 0) {
+                    let clientId = data[0][0];
+                    clientIdSelect.val(clientId);
+                    clientIdSelect.trigger('change');
+                }
+    
+                // Clear the data fields when no client IDs are available
+                if (data.length === 0) {
+                    $('#dregimen_po_value').text('');
+                    $('#laspud_po_value').text('');
+                    $('#quantityd_po_value').text('');
+                }
+            });
+    
+        });
+    
         $('select[name="client_id"]').change(function() {
             let clientId = $(this).val();
             $.getJSON('/get_client_data', {
                 client_id: clientId
             }, function(data) {
                 console.log("Received data:", data);  // Debugging line
-                $('#dregimen_po_value').text(data.dregimen_po || 'Not available');
-                $('#laspud_po_value').text(data.laspud_po || 'Not available');
-                $('#quantityd_po_value').text(data.quantityd_po || 'Not available');
+                $('#dregimen_po_value').text(data.dregimen_po || '----');
+                $('#laspud_po_value').text(data.laspud_po || '----');
+                $('#quantityd_po_value').text(data.quantityd_po || '----');
             });
         });
+
+        $('select[name="client_id"]').change(function() {
+        let clientId = $(this).val();
+        getClientData(clientId);
+        });
     </script>
+    
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
 </body>
 </html>

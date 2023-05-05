@@ -65,26 +65,26 @@
             </div>
             <div class="form-group">
                 <label for="{{ form.dregimen_pw.id }}">Drug Regimen Pharmacy Record</label>
-                {{ form.dregimen_pw(class="form-control") }} <span id="dregimen_pw" class="ml-5"><b>(Available Record: <span id="dregimen_pw_value">-----</b></span>)</span>
+                {{ form.dregimen_pw(class="form-control") }} <span id="dregimen_pw" class="ml-5"><b>(Available Record: <span id="dregimen_pw_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.mrefill_pw.id }}">Months of Refill Pharmacy Record</label>
-                {{ form.mrefill_pw(class="form-control") }} <span id="mrefill_pw" class="ml-5"><b>(Available Record: <span id="mrefill_pw_value">-----</b></span>)</span>
+                {{ form.mrefill_pw(class="form-control") }} <span id="mrefill_pw" class="ml-5"><b>(Available Record: <span id="mrefill_pw_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.laspud_pw.id }}">Last pickup Date Pharmacy Record</label>
-                {{ form.laspud_pw(class="form-control") }} <span id="laspud_pw" class="ml-5"><b>(Available Record: <span id="laspud_pw_value">-----</b></span>)</span>
+                {{ form.laspud_pw(class="form-control") }} <span id="laspud_pw" class="ml-5"><b>(Available Record: <span id="laspud_pw_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.quantityd_pw.id }}">Quantity of Drug Dispenced Pharmacy Record</label>
-                {{ form.quantityd_pw(class="form-control") }} <span id="quantityd_pw" class="ml-5"><b>(Available Record: <span id="quantityd_pw_value">-----</b></span>)</span>
+                {{ form.quantityd_pw(class="form-control") }} <span id="quantityd_pw" class="ml-5"><b>(Available Record: <span id="quantityd_pw_value"> </b></span>)</span>
             </div>
             <div class="form-group">
                 <label for="{{ form.pharm_doc.id }}">Pharmacy Record Sighted?</label>
-                {{ form.pharm_doc() }} <span id="pharm_doc" class="ml-5"><b>(Available Record: <span id="pharm_doc_value">-----</b></span>)</span>
+                {{ form.pharm_doc() }} <span id="pharm_doc" class="ml-5"><b>(Available Record: <span id="pharm_doc_value"> </b></span>)</span>
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
@@ -117,6 +117,23 @@
                         );
                     });
                     clientIdSelect.selectpicker('refresh');
+
+                    // Select the first client ID by default if available
+                    if (data.length > 0) {
+                        let clientId = data[0][0];
+                        clientIdSelect.val(clientId);
+                        clientIdSelect.trigger('change');
+                    }
+
+                    // Clear the data fields when no client IDs are available
+                    if (data.length === 0) {
+                        $('#dregimen_pw_value').text('');
+                        $('#mrefill_pw_value').text('');
+                        $('#laspud_pw_value').text('');
+                        $('#quantityd_pw_value').text('');
+                        $('#pharm_doc_value').text('');
+                    }
+
                 });
             });
 

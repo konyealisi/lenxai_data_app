@@ -66,26 +66,26 @@
             </div>
             <div class="form-group">
                 <label for="{{ form.dregimen_po.id }}">Drug Regimen Client's Record (Client's Folder)</label>
-                {{ form.dregimen_po(class="form-control") }} <span id="dregimen_po" class="ml-5"><b>(Available Record: <span id="dregimen_po_value">-----</b></span>)</span>
+                {{ form.dregimen_po(class="form-control") }} <span id="dregimen_po" class="ml-5"><b>(Available Record: <span id="dregimen_po_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.mrefill_po.id }}">Months of Refill Client's Record</label>
-                {{ form.mrefill_po(class="form-control") }} <span id="mrefill_po" class="ml-5"><b>(Available Record: <span id="mrefill_po_value">-----</b></span>)</span>
+                {{ form.mrefill_po(class="form-control") }} <span id="mrefill_po" class="ml-5"><b>(Available Record: <span id="mrefill_po_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.laspud_po.id }}">Last pickup Date Client's Record</label>
-                {{ form.laspud_po(class="form-control") }} <span id="laspud_po" class="ml-5"><b>(Available Record: <span id="laspud_po_value">-----</b></span>)</span>
+                {{ form.laspud_po(class="form-control") }} <span id="laspud_po" class="ml-5"><b>(Available Record: <span id="laspud_po_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.quantityd_po.id }}">Quantity of Drug Dispenced Client's Record</label>
-                {{ form.quantityd_po(class="form-control") }} <span id="quantityd_po" class="ml-5"><b>(Available Record: <span id="quantityd_po_value">-----</b></span>)</span>
+                {{ form.quantityd_po(class="form-control") }} <span id="quantityd_po" class="ml-5"><b>(Available Record: <span id="quantityd_po_value"> </b></span>)</span>
             </div>
             <div class="form-group">
                 <label for="{{ form.client_folder.id }}">Client Folder Sighted?</label>
-                {{ form.client_folder() }} <span id="client_folder" class="ml-5"><b>(Available Record: <span id="client_folder_value">-----</b></span>)</span>
+                {{ form.client_folder() }} <span id="client_folder" class="ml-5"><b>(Available Record: <span id="client_folder_value"> </b></span>)</span>
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
@@ -118,6 +118,23 @@
                         );
                     });
                     clientIdSelect.selectpicker('refresh');
+
+                    // Select the first client ID by default if available
+                    if (data.length > 0) {
+                        let clientId = data[0][0];
+                        clientIdSelect.val(clientId);
+                        clientIdSelect.trigger('change');
+                    }
+
+                    // Clear the data fields when no client IDs are available
+                    if (data.length === 0) {
+                        $('#dregimen_po_value').text('');
+                        $('#mrefill_po_value').text('');
+                        $('#laspud_po_value').text('');
+                        $('#quantityd_po_value').text('');
+                        $('#client_folder_value').text('');
+                    }
+
                 });
             });
 

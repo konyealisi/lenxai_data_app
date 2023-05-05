@@ -4,6 +4,7 @@ import csv
 import os
 import subprocess
 import re
+import json
 
 from sqlalchemy import text, create_engine, inspect
 from sqlalchemy.orm import sessionmaker
@@ -37,10 +38,18 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = os.environ.get('FLASK_APP_SECRET_KEY', 'fallback_secret_key')
 
-db_user = os.environ.get('DB_USER_ndqadata')
-db_password = os.environ.get('DB_PASSWORD_ndqadata')
-db_host = os.environ.get('DB_HOST_ndqadata')
-db_name = os.environ.get('DB_NAME_ndqadata')
+with open('C:/Users/konye/Documents/mydoc.json') as f:
+    secrets = json.load(f)
+
+db_user = secrets['db_user']
+db_password = secrets['db_password']
+db_host = secrets['db_host']
+db_name = secrets['db_name']
+
+# db_user = os.environ.get('DB_USER_ndqadata')
+# db_password = os.environ.get('DB_PASSWORD_ndqadata')
+# db_host = os.environ.get('DB_HOST_ndqadata')
+# db_name = os.environ.get('DB_NAME_ndqadata')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}/{db_name}'
 
@@ -75,7 +84,7 @@ def requires_roles(*roles):
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html', title='Home')
+    return redirect(url_for('landing')) #render_template('index.html', title='Home')
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -437,7 +446,7 @@ def validate_client_record():
        
         if not client_record:
                 flash('Client record not found.', 'danger')
-                return redirect(url_for('landing'))
+                return redirect(url_for('validate_client_record'))
         
         if not client_record.dregimen_po_correct:
             client_record.dregimen_po_correct = form.dregimen_po_correct.data
@@ -454,7 +463,7 @@ def validate_client_record():
 
         db.session.commit()
         flash('Client record validated successfully.', 'success')
-        return redirect(url_for('landing'))
+        return redirect(url_for('validate_client_record'))
    
     return render_template('validate_client_record.html', form=form)
 
@@ -471,7 +480,7 @@ def validate_pharm_record():
        
         if not client_record:
                 flash('Client record not found.', 'danger')
-                return redirect(url_for('landing'))
+                return redirect(url_for('validate_pharm_record'))
         
         if not client_record.dregimen_po_correct:
             client_record.dregimen_po_correct = form.dregimen_po_correct.data
@@ -488,7 +497,7 @@ def validate_pharm_record():
 
         db.session.commit()
         flash('Client record validated successfully.', 'success')
-        return redirect(url_for('landing'))
+        return redirect(url_for('validate_pharm_record'))
    
     return render_template('validate_pharm_record.html', form=form)
 
@@ -551,7 +560,7 @@ def update_client_record():
        
         if not client_record:
                 flash('Client record not found.', 'danger')
-                return redirect(url_for('landing'))
+                return redirect(url_for('update_client_record'))
         
         client_record.dregimen_po = form.dregimen_po.data
         client_record.mrefill_po = form.mrefill_po.data
@@ -564,7 +573,7 @@ def update_client_record():
 
         db.session.commit()
         flash('Client record updated successfully.', 'success')
-        return redirect(url_for('landing'))
+        return redirect(url_for('update_client_record'))
     
 
     return render_template('update_client_record.html', form=form)
@@ -623,7 +632,7 @@ def update_pharm_record():
        
         if not client_record:
                 flash('Client record not found.', 'danger')
-                return redirect(url_for('landing'))
+                return redirect(url_for('update_pharm_record'))
         
         client_record.dregimen_pw = form.dregimen_pw.data
         client_record.mrefill_pw = form.mrefill_pw.data
@@ -636,7 +645,7 @@ def update_pharm_record():
 
         db.session.commit()
         flash('Client record updated successfully.', 'success')
-        return redirect(url_for('landing'))
+        return redirect(url_for('update_pharm_record'))
     
     return render_template('update_pharm_record.html', form=form)
 

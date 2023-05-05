@@ -32,10 +32,6 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" %_OLD_CODEPAGE% > nul
     set _OLD_CODEPAGE=
 )
-set DB_USER_ndqadata=ndqadata
-set DB_PASSWORD_ndqadata=*K5e1l0e7c4H5i95
-set DB_NAME_ndqadata=ndqadcollection
-set DB_HOST_ndqadata=localhost
 
 set FLASK_APP=app.py
 

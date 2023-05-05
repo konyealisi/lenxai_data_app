@@ -46,43 +46,38 @@
         </div>
         <form method="POST">
             {{ form.hidden_tag() }}
-            <table>
-                <!-- Other table rows here -->
-                <tr>
-                    <th>Facility</th>
-                    <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
-                </tr>
-                <tr>
-                    <th>Client ID</th>
-                    <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
-                </tr>
-                <!-- Other table rows here -->
-            </table>
-            <div class="spacing-div"></div>
+            <div>
+                <div style="display: inline-block;">
+                    <table>
+                        <tr>
+                            <th>Facility</th>
+                            <td>{{ form.facility_name(class="selectpicker", data_live_search="true") }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="display: inline-block;">
+                    <table>
+                        <tr>
+                            <th>Client ID</th>
+                            <td>{{ form.client_id(class="selectpicker", data_live_search="true") }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.dregimen_pw_correct.id }}">Is Pharmacy Drug Regimen Record Correct?</label>
-                <div class="d-inline-block">
-                    <span id="dregimen_pw" class="ml-2">(Check value: <strong><span id="dregimen_pw_value">Not available</span></strong>)</span>
-                </div>
-                {{ form.dregimen_pw_correct() }}
+                {{ form.dregimen_pw_correct() }} <span id="dregimen_pw" class="ml-5"><b>(Available Record: <span id="dregimen_pw_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
-            
             <div class="form-group">
                 <label for="{{ form.laspud_pw_correct.id }}">Is Pharmacy Last Drug Pickup Date Correct?</label>
-                <div class="d-inline-block">
-                    <span id="dregimen_pw" class="ml-2">(Check value: <strong><span id="laspud_pw_value">Not available</span></strong>)</span>
-                </div>
-                {{ form.laspud_pw_correct() }}
+                {{ form.laspud_pw_correct() }}   <span id="laspud_pw" class="ml-5"><b>(Available Record: <span id="laspud_pw_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.quantityd_pw_correct.id }}">Is Pharmacy Drug Quantity Dispensed Correct?</label>
-                <div class="d-inline-block">
-                    <span id="dregimen_pw" class="ml-2">(Check value: <strong><span id="quantityd_pw_value">Not available</span></strong>)</span>
-                </div>
-                {{ form.quantityd_pw_correct() }}
+                {{ form.quantityd_pw_correct() }} <span id="quantityd_pw" class="ml-5"><b>(Available Record: <span id="quantityd_pw_value"> </b></span>)</span>
             </div>
             <div class="spacing-div"></div>
             
@@ -106,7 +101,7 @@
     <script>
         $('select[name="facility_name"]').change(function() {
             let facilityName = $(this).val();
-            $.getJSON('/get_client_ids_validate_pr', {
+            $.getJSON('/get_client_ids_validate_cr', {
                 facility_name: facilityName
             }, function(data) {
                 let clientIdSelect = $('select[name="client_id"]');
@@ -114,22 +109,42 @@
                 $.each(data, function(index, client) {
                     clientIdSelect.append(
                         $('<option></option>').attr('value', client[0]).text(client[1])
-                        );
-                    });
-                    clientIdSelect.selectpicker('refresh');
+                    );
                 });
-            });
+                clientIdSelect.selectpicker('refresh');
 
+                // Select the first client ID by default if available
+                if (data.length > 0) {
+                    let clientId = data[0][0];
+                    clientIdSelect.val(clientId);
+                    clientIdSelect.trigger('change');
+                }
+    
+                // Clear the data fields when no client IDs are available
+                if (data.length === 0) {
+                    $('#dregimen_pw_value').text('');
+                    $('#laspud_pw_value').text('');
+                    $('#quantityd_pw_value').text('');
+                }
+            });
+    
+        });
+    
         $('select[name="client_id"]').change(function() {
             let clientId = $(this).val();
             $.getJSON('/get_client_data', {
                 client_id: clientId
             }, function(data) {
                 console.log("Received data:", data);  // Debugging line
-                $('#dregimen_pw_value').text(data.dregimen_pw || 'Not available');
-                $('#laspud_pw_value').text(data.laspud_pw || 'Not available');
-                $('#quantityd_pw_value').text(data.quantityd_pw || 'Not available');
+                $('#dregimen_pw_value').text(data.dregimen_pw || '----');
+                $('#laspud_pw_value').text(data.laspud_pw || '----');
+                $('#quantityd_pw_value').text(data.quantityd_pw || '----');
             });
+        });
+
+        $('select[name="client_id"]').change(function() {
+        let clientId = $(this).val();
+        getClientData(clientId);
         });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>

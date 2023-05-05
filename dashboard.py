@@ -62,8 +62,8 @@ grouped_counts = grouped_df.agg(
     txcurr_pr=('txcurr_pr', 'sum'),#lambda x: (x == 'yes').sum()),
     txcurr_vf=('txcurr_vf', 'mean')
 ).reset_index()
-print('grouped_counts DataFrame:')
-print(grouped_counts)
+# print('grouped_counts DataFrame:')
+# print(grouped_counts)
 df1 = pd.DataFrame(grouped_counts)
 
 def init_dash(app):
