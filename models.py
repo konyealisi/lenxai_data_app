@@ -8,28 +8,6 @@ from sqlalchemy import Numeric, ForeignKey, Column, Integer, String, Date, Boole
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import event
 from datetime import datetime
-import json
-
-
-
-
-# with open('C:/Users/konye/Documents/mydoc.json') as f:
-#     secrets = json.load(f)
-
-# db_user = secrets['db_user']
-# db_password = secrets['db_password']
-# db_host = secrets['db_host']
-# db_name = secrets['db_name']
-
-# db_user = os.environ.get('DB_USER_ndqadata')
-# db_password = os.environ.get('DB_PASSWORD_ndqadata')
-# db_host = os.environ.get('DB_HOST_ndqadata')
-# db_name = os.environ.get('DB_NAME_ndqadata') 
-
-# print(f' Database name: \t {db_name}')
-# print(f' Database user: \t {db_user}')
-# print(f' Database db_password: \t {db_password}')
-# print(f' Database host: \t {db_host}')
 
 db = SQLAlchemy()
 
@@ -89,23 +67,65 @@ class DataEntry(db.Model):
 # User class
 # This define the Use database - in postgres
 # that all store user datsa needed forauthentication
+# class User(db.Model, UserMixin):
+#     id = db.Column(db.Integer, primary_key=True)
+#     username = db.Column(db.String(20), unique=True, nullable=False)
+#     email = db.Column(db.String(120), unique=True, nullable=False)
+#     password = db.Column(db.String(150), nullable=False)
+#     role = db.Column(db.String(20), nullable=False, default='dataentrant')
+#     state = db.Column(db.String(128), nullable=True)
+#     facility_name = db.Column(db.String, ForeignKey("facility.facility_name"), nullable=True)
+#     facility = relationship("Facility", back_populates="users")
+
+#     def set_password(self, password):
+#         self.password = generate_password_hash(password)
+
+#     def check_password(self, password):
+#         return check_password_hash(self.password, password)
+    
+#     def has_permission(self, requested_state, requested_facility):
+#         if self.state is None or self.state == 'all':
+#             return True
+#         elif self.state == requested_state:
+#             if self.facility_name is None or self.facility_name == 'all':
+#                 return True
+#             elif self.facility_name == requested_facility:
+#                 return True
+#         return False
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='dataentrant')
+    state = db.Column(db.String(128), nullable=True)
+    facility_name = db.Column(db.String, ForeignKey("facility.facility_name"), nullable=True)
+    facility = relationship("Facility", back_populates="users")
+    all_facilities = db.Column(db.Boolean, default=False, nullable=False)
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+    
+    def has_permission(self, requested_state, requested_facility):
+        if self.state is None or self.state.lower() == 'all':
+            return True
+        elif self.state == requested_state:
+            if self.facility_name is None or self.facility_name.lower() == 'all':
+                return True
+            elif self.facility_name == requested_facility:
+                return True
+        return False
+
 
 class Facility(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     facility_name = db.Column(db.String(128), nullable=False, unique=True)
     client_records = relationship("DataEntry", back_populates="facility")
+    users = relationship("User", back_populates="facility")
     country = db.Column(db.String(128), nullable=True)
     state = db.Column(db.String(128), nullable=True)
     lga = db.Column(db.String(128), nullable=True)

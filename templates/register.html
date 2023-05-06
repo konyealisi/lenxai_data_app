@@ -1,12 +1,10 @@
 {% extends "facilitybase.html" %}
 
 {% block extra_css %}
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
-
 <div class="container">
     <div class="spacing-div"></div>
     <div class="d-flex justify-content-center">
@@ -36,6 +34,29 @@
                     {{ register_form.role.label(class="form-control-label") }}
                     {{ register_form.role(class="form-control form-control-lg") }}
                 </div>
+                <table>
+                    <tr>
+                      <td>{{ register_form.state.label(class="form-control-label") }}</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <select name="{{ register_form.state.name }}" id="state">
+                          <option value="" selected>All states</option>
+                          {% if register_form.state.choices %}
+                            {% for value, label, selected in register_form.state.iter_choices() %}
+                              <option value="{{ value }}" {% if selected %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                          {% endif %}
+                        </select>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>{{ register_form.facility_name.label(class="form-control-label") }}</td>
+                    </tr>
+                    <tr>
+                      <td>{{ register_form.facility_name }}</td>
+                    </tr>
+                  </table>           
             </fieldset>
             <div class="spacing-div"></div>
             <div class="form-group">
@@ -58,6 +79,40 @@
 </div>
 {% endblock %}
 {% block scripts %}
-
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+  <script>
+    $(document).ready(function() {
+        updateFacilityOptions();
+    // Function to update the facility dropdown options
+    function updateFacilityOptions() {
+        let state = $('#state').val();
+        
+        // If "All states" is selected, set the facility dropdown to "All facilities" and disable it
+        if (state === "") {
+            let facilitySelect = $('#facility_name');
+            facilitySelect.empty();
+            facilitySelect.append($('<option>', {value: '', text: 'All facilities'}));
+            facilitySelect.val('');
+            facilitySelect.prop('disabled', true);
+        } else {
+            // If a specific state is selected, enable the facility dropdown and populate it with the facilities for that state
+            $.getJSON('{{ url_for("get_facilities") }}', {state: state}, function(facilities) {
+            let facilitySelect = $('#facility_name');
+            facilitySelect.empty();
+            facilitySelect.append($('<option>', {value: '', text: 'All facilities'}));
+            facilitySelect.prop('disabled', false);
+            $.each(facilities, function(index, facility) {
+                facilitySelect.append($('<option>', {value: facility.facility_name, text: facility.facility_name}));
+            });
+            });
+        }
+        }
+
+
+    // Update the facility dropdown options when the state is selected
+    $('#state').change(updateFacilityOptions);
+    });
+  </script>
 {% endblock %}

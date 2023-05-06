@@ -5,8 +5,11 @@ import os
 import subprocess
 import re
 import json
+from xml.etree.ElementTree import Element, SubElement, tostring
+from decimal import Decimal
 
-from sqlalchemy import text, create_engine, inspect
+
+from sqlalchemy import text, create_engine, inspect, or_
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -16,7 +19,7 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationE
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from io import StringIO
-from flask import Response
+from flask import Response, abort
 from flask_migrate import Migrate
 from flask import current_app
 from datetime import datetime, timedelta, date
@@ -45,11 +48,6 @@ db_user = secrets['db_user']
 db_password = secrets['db_password']
 db_host = secrets['db_host']
 db_name = secrets['db_name']
-
-# db_user = os.environ.get('DB_USER_ndqadata')
-# db_password = os.environ.get('DB_PASSWORD_ndqadata')
-# db_host = os.environ.get('DB_HOST_ndqadata')
-# db_name = os.environ.get('DB_NAME_ndqadata')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}/{db_name}'
 
@@ -80,6 +78,54 @@ def requires_roles(*roles):
         return decorated_function
     return decorator
 
+def get_user_accessible_facilities(user):
+    if user.role == 'sysadmin' or user.role == 'admin':
+        return Facility.query.all()
+    elif user.role == 'superuser' or user.role == 'datavalidator' or user.role == 'dataentrant':
+        return Facility.query.filter_by(state=user.state).all()
+    else:
+        return []
+
+def get_requested_state():
+    return request.view_args.get('state')
+
+def get_requested_facility():
+    return request.view_args.get('facility')
+
+def requires_data_permission(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Login required.')
+            return redirect(url_for('login'))
+
+        requested_state = get_requested_state(*args, **kwargs)
+        requested_facility = get_requested_facility(*args, **kwargs)
+
+        if not current_user.has_permission(requested_state, requested_facility):
+            flash('You do not have permission to access this page.')
+            return redirect(url_for('landing'))
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+def requires_roles_and_data_permission(*roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                abort(401)
+
+            current_user = User.query.get(session['user_id'])
+            has_required_roles = all(current_user.has_role(role) for role in roles)
+
+            if not has_required_roles:
+                abort(403)
+
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 
 @app.route('/')
 @app.route('/index')
@@ -96,26 +142,11 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
-# register route - for creating new user by authorized user - sysadmin, admin, and superuser
-@app.route('/register', methods=['GET', 'POST'])
-@requires_roles('sysadmin','admin', 'superuser')
-def register():
-    if not current_user.is_authenticated or current_user.role not in ['sysadmin', 'admin', 'superuser']:
-        flash("You don't have permission to access this page.")
-        return redirect(url_for('index'))
-    if current_user.role in ['sysadmin', 'admin']:
-        register_form = RegistrationFormAdmin()
-    elif current_user.role == 'superuser':
-        register_form = RegistrationFormSuperuser()    
-    if register_form.validate_on_submit():
-        user = User(username=register_form.username.data, email=register_form.email.data, role=register_form.role.data)
-        user.set_password(register_form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash('Your account has been created! You can now log in.', 'success')
-        next_page = request.args.get('next')
-        return redirect(next_page) if next_page else redirect(url_for('login'))
-    return render_template('register.html', title='Register', register_form=register_form)
+
+def get_facility_choices():
+    facilities = Facility.query.all()
+    facility_choices = [(facility.id, facility.facility_name) for facility in facilities]
+    return facility_choices
 
 # login route - for login in and gaining access to the platform
 @app.route('/login', methods=['GET', 'POST'])
@@ -133,6 +164,51 @@ def login():
         else:
             flash('Login unsuccessful.  Please check your email and password.', 'danger')
     return render_template('login.html', title='Login', login_form=login_form)#, register_form=register_form)
+
+
+@app.route('/register', methods=['GET', 'POST'])
+@requires_roles('sysadmin', 'admin', 'superuser')
+def register():
+    if not current_user.is_authenticated or current_user.role not in ['sysadmin', 'admin', 'superuser']:
+        flash("You don't have permission to access this page.")
+        return redirect(url_for('index'))
+
+    register_form = RegistrationFormAdmin()
+    register_form.state.choices = [f.state for f in Facility.query.distinct(Facility.state)]
+    register_form.facility_name.choices = get_facility_choices()
+
+    if request.method == 'POST':
+        form_data = request.form
+        print(f"Form data: {form_data}")
+
+        username = form_data.get('username')
+        email = form_data.get('email')
+        password = form_data.get('password')
+        confirm_password = form_data.get('confirm_password')
+        role = form_data.get('role')
+        state = form_data.get('state')
+        facility_name = form_data.get('facility_name')
+
+        if password == confirm_password:
+            user = User(
+                username=username,
+                email=email,
+                role=role,
+                state=state if state != '' else None,
+                facility_name=facility_name if facility_name != '' else None
+            )
+            user.set_password(password)
+
+            db.session.add(user)
+            db.session.commit()
+
+            flash('Your account has been created! You can now log in.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash("Passwords do not match.", 'error')
+
+    return render_template('register.html', title='Register', register_form=register_form)
+
 
 # User route - lets the sysadmin and admin user view all registered users on the platform
 @app.route('/users')
@@ -159,11 +235,25 @@ def download():
     return render_template("download.html")
 
 
+from flask_login import current_user  # Add this import at the top of your file if it's not there
+
 @app.route('/download_csv', methods=['GET'])
 @requires_roles('sysadmin', 'admin', 'superuser')
 def download_csv():
-    # Query data from the database and join DataEntry and Facility tables on facility_name
-    data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name).all()
+    # Get the current user
+
+    # If the user is not assigned to a specific state or facility, return all data
+    if (current_user.state is None or current_user.state == 'All states') and (current_user.facility_name is None or current_user.facility_name == 'All facilities'):
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name).all()
+    # If the user is assigned to a specific state and all facilities within that state
+    elif current_user.state != 'All states' and (current_user.facility_name is None or current_user.facility_name == 'All facilities'):
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name)\
+            .filter(Facility.state == current_user.state).all()
+    # If the user is assigned to a specific state and a specific facility
+    else:
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name)\
+            .filter(Facility.state == current_user.state)\
+            .filter(Facility.facility_name == current_user.facility_name).all()
 
     # Convert data to a list of dictionaries
     data_list = []
@@ -177,15 +267,15 @@ def download_csv():
 
     # Create a CSV file in memory
     csv_file = StringIO()
-    fieldnames = ['facility_name','id', 'state', 'lga', 'latitude', 'longitude','client_id','client_name','sex','age','tx_age','dregimen_ll','mrefill_ll','laspud_ll','curr_ll',
-                    'userid_cr', 'entry_datetime_cr', 'dregimen_po','mrefill_po','laspud_po','quantityd_po','curr_cr','client_folder','dregimen_po_correct','laspud_po_correct','quantityd_po_correct', 
-                        'userid_pr', 'entry_datetime_pr', 'dregimen_pw','mrefill_pw','laspud_pw','quantityd_pw','curr_pr','pharm_doc', 'dregimen_pw_correct','laspud_pw_correct','quantityd_pw_correct']
-    
+    fieldnames = ['facility_name', 'id', 'state', 'lga', 'latitude', 'longitude', 'client_id', 'client_name', 'sex', 'age', 'tx_age', 'dregimen_ll', 'mrefill_ll', 'laspud_ll', 'curr_ll',
+                    'userid_cr', 'entry_datetime_cr', 'dregimen_po', 'mrefill_po', 'laspud_po', 'quantityd_po', 'curr_cr', 'client_folder', 'dregimen_po_correct', 'laspud_po_correct', 'quantityd_po_correct',
+                    'userid_pr', 'entry_datetime_pr', 'dregimen_pw', 'mrefill_pw', 'laspud_pw', 'quantityd_pw', 'curr_pr', 'pharm_doc', 'dregimen_pw_correct', 'laspud_pw_correct', 'quantityd_pw_correct']
+
     # Define user-friendly headers
     friendly_headers = ['Health Facility', 'Facility ID', 'State', 'LGA', 'Latitude', 'Longitude', 'Client ID', 'Client Name', 'Sex', 'Age', 'Tx Age (months)', 'Drug Regimen NDR', 'Month of Refill NDR', 'LAST Pick Up Date NDR', 'is Current on Tx NDR',
-                        'User ID CR', 'Data Entry Time CR', 'Drug Regimen CR', 'Month of Refill CR', 'LAST Pick Up Date CR', 'Drug Quantity CR', 'is Current on Tx CR', 'Client Folder Sighted?', 'Drug Regimen CR Correct?', 'LAST Pick Up Date CR Correct?', 'Drug Quantity CR Correct?',
+                        'User ID CR', 'Data Entry Time CR', 'Drug Regimen CR', 'Month of Refill CR', 'LAST Pick Up Date CR', 'Drug Quantity CR', 'is Current on Tx CR', 'Client Folder Sighted?', 'Drug Regimen CR Correct?', 'LAST Pick Up Date CR Correct?', 'Drug Quantity CR Correct?', 
                         'User ID PR', 'Data Entry Time PR', 'Drug Regimen PR', 'Month of Refill PR', 'LAST Pick Up Date PR', 'Drug Quantity PR', 'is Current on Tx PR', 'Pharmacy Documentation Sighted?', 'Drug Regimen PR Correct?', 'LAST Pick Up Date PR Correct?', 'Drug Quantity PR Correct?']
-    
+   
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames, extrasaction='ignore')
     writer.writerow(dict(zip(fieldnames, friendly_headers)))
     for row in data_list:
@@ -200,6 +290,159 @@ def download_csv():
     )
 
     return response
+
+
+@app.route('/download_json', methods=['GET'])
+@requires_roles('sysadmin', 'admin', 'superuser')
+def download_json():
+    # Get the current user
+
+    # If the user is not assigned to a specific state or facility, return all data
+    if (current_user.state is None or current_user.state == 'All states') and (current_user.facility_name is None or current_user.facility_name == 'All facilities'):
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name).all()
+    # If the user is assigned to a specific state and all facilities within that state
+    elif current_user.state != 'All states' and (current_user.facility_name is None or current_user.facility_name == 'All facilities'):
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name)\
+            .filter(Facility.state == current_user.state).all()
+    # If the user is assigned to a specific state and a specific facility
+    else:
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name)\
+            .filter(Facility.state == current_user.state)\
+            .filter(Facility.facility_name == current_user.facility_name).all()
+
+    # Convert data to a list of dictionaries
+    data_list = []
+    for row in data:
+        data_entry = row.DataEntry.to_dict()
+        facility = row.Facility.to_dict()
+
+        # Merge the dictionaries and add the 'facility_id' from the Facility table
+        merged_data = {**data_entry, **facility}
+        data_list.append(merged_data)
+
+    # Convert the data_list to a JSON string
+    json_data = json.dumps(data_list, default=str)  # Use default=str to handle date and time objects
+
+    # Serve the JSON data as a response
+    response = Response(
+        json_data,
+        mimetype='application/json',
+        headers={'Content-Disposition': 'attachment;filename=data.json'}
+    )
+
+    return response
+
+@app.route('/download_xml', methods=['GET'])
+@requires_roles('sysadmin', 'admin', 'superuser')
+def download_xml():
+    # Get the current user
+
+    # If the user is not assigned to a specific state or facility, return all data
+    if (current_user.state is None or current_user.state == 'All states') and (current_user.facility_name is None or current_user.facility_name == 'All facilities'):
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name).all()
+    # If the user is assigned to a specific state and all facilities within that state
+    elif current_user.state != 'All states' and (current_user.facility_name is None or current_user.facility_name == 'All facilities'):
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name)\
+            .filter(Facility.state == current_user.state).all()
+    # If the user is assigned to a specific state and a specific facility
+    else:
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name)\
+            .filter(Facility.state == current_user.state)\
+            .filter(Facility.facility_name == current_user.facility_name).all()
+
+    # Convert data to a list of dictionaries
+    data_list = []
+    for row in data:
+        data_entry = row.DataEntry.to_dict()
+        facility = row.Facility.to_dict()
+
+        # Merge the dictionaries and add the 'facility_id' from the Facility table
+        merged_data = {**data_entry, **facility}
+        data_list.append(merged_data)
+
+    # Create the root element of the XML tree
+    root = Element('data_entries')
+
+    # Add a new element for each row in data_list
+    for row in data_list:
+        entry = SubElement(root, 'entry')
+        for key, value in row.items():
+            elem = SubElement(entry, key)
+            elem.text = str(value)
+
+    # Convert the XML tree to a string
+    xml_data = tostring(root, encoding='utf-8')
+
+    # Serve the XML data as a response
+    response = Response(
+        xml_data,
+        mimetype='application/xml',
+        headers={'Content-Disposition': 'attachment;filename=data.xml'}
+    )
+
+    return response
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, date):
+            return obj.isoformat()
+        elif isinstance(obj, Decimal):
+            return float(obj)
+        return super(CustomJSONEncoder, self).default(obj)
+
+@app.route('/api/data', methods=['GET'])
+@requires_roles('sysadmin', 'admin', 'superuser')
+def api_data():
+    # Get the current user
+
+    # If the user is not assigned to a specific state or facility, return all data
+    if (current_user.state is None or current_user.state == 'All states') and (current_user.facility_name is None or current_user.facility_name == 'All facilities'):
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name).all()
+    # If the user is assigned to a specific state and all facilities within that state
+    elif current_user.state != 'All states' and (current_user.facility_name is None or current_user.facility_name == 'All facilities'):
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name)\
+            .filter(Facility.state == current_user.state).all()
+    # If the user is assigned to a specific state and a specific facility
+    else:
+        data = db.session.query(DataEntry, Facility).join(Facility, DataEntry.facility_name == Facility.facility_name)\
+            .filter(Facility.state == current_user.state)\
+            .filter(Facility.facility_name == current_user.facility_name).all()
+
+    # Convert data to a list of dictionaries
+    data_list = []
+    for row in data:
+        data_entry = row.DataEntry.to_dict()
+        facility = row.Facility.to_dict()
+
+        # Merge the dictionaries and add the 'facility_id' from the Facility table
+        merged_data = {**data_entry, **facility}
+        data_list.append(merged_data)
+
+    # Convert data_list to JSON
+    response_data = json.dumps(data_list, cls=CustomJSONEncoder)
+
+    # Serve the JSON data as a response
+    response = Response(
+        response_data,
+        content_type='application/json'
+        # mimetype='application/json',
+        # headers={'Content-Disposition': 'attachment;filename=data.json'}
+    )
+
+    return response
+
+@app.route('/data/<string:state>/<string:facility>', methods=['GET', 'POST'])
+@requires_data_permission
+def data_view(state, facility):
+    # Query the data based on the given state and facility
+    data_entries = DataEntry.query.join(Facility).filter(Facility.state == state, Facility.facility_name == facility).all()
+
+    # Convert the data entries to dictionaries
+    data_dicts = [entry.to_dict() for entry in data_entries]
+
+    # Return the data as a JSON response
+    return jsonify(data_dicts)
+
 
 
 # The main landing page
@@ -437,7 +680,11 @@ def upload_data():
 @requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator')
 def validate_client_record():
     form = ValidateRecordForm(request.form)
-    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+    #form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+    # Get the list of facilities that the user has access to
+    user_facilities = get_user_accessible_facilities(current_user)
+    
+    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in user_facilities]
 
     if request.method == 'POST':
         client_id = form.client_id.data
@@ -471,7 +718,11 @@ def validate_client_record():
 @requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator')
 def validate_pharm_record():
     form = ValidateRecordForm(request.form)
-    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+    #form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+    # Get the list of facilities that the user has access to
+    user_facilities = get_user_accessible_facilities(current_user)
+    
+    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in user_facilities]
 
     if request.method == 'POST':
         client_id = form.client_id.data
@@ -510,7 +761,10 @@ def po_entry_exists(client_id, laspud_po):
 @requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dataentrant')
 def client_record():
     form = FacilityForm(request.form)
-    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+    # Get the list of facilities that the user has access to
+    user_facilities = get_user_accessible_facilities(current_user)
+    
+    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in user_facilities]
 
     if request.method == 'POST':
         client_id = form.client_id.data
@@ -582,7 +836,11 @@ def update_client_record():
 @requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dataentrant')
 def pharm_record():
     form = PhamarcyForm(request.form)
-    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+    #form.facility_name.choices = [(f.facility_name, f.facility_name) for f in DataEntry.query.distinct(DataEntry.facility_name)]
+    # Get the list of facilities that the user has access to
+    user_facilities = get_user_accessible_facilities(current_user)
+    
+    form.facility_name.choices = [(f.facility_name, f.facility_name) for f in user_facilities]
 
     if request.method == 'POST':
         client_id = form.client_id.data
@@ -697,148 +955,25 @@ def get_client_data():
 
     return jsonify(response)
 
+# Add a route to get facilities for a given state
+@app.route('/get_facilities', methods=['GET'])
+def get_facilities():
+    state = request.args.get('state', None)
+    if state:
+        facilities = Facility.query.filter_by(state=state).all()
+        return jsonify([f.to_dict() for f in facilities])
+    else:
+        return jsonify([])
 
-
-# @app.cli.command('drop-data-entry-table')
-# #@requires_roles('sysadmin')
-# def drop_data_entry_table():
-#     with app.app_context():
-#         inspector = inspect(db.engine)
-#         table_names = inspector.get_table_names()
-#         print(table_names)
-#         if 'data_entry' in table_names:
-#             sql = text('DROP TABLE data_entry;')
-#             result = db.session.execute(sql)
-#             db.session.commit()
-#             print("Dropped table 'data_entry' successfully.")
-#         else:
-#             print("Table not found.")
-# # flask drop-data-entry-table
-
-
-# @app.cli.command('drop-facility_name_item-table')
-# #@requires_roles('sysadmin')
-# def drop_data_facility_name_table():
-#     with app.app_context():
-#         inspector = inspect(db.engine)
-#         table_names = inspector.get_table_names()
-#         print(table_names)
-#         if 'facility_name_item' in table_names:
-#             sql = text('DROP TABLE facility_name_item;')
-#             result = db.session.execute(sql)
-#             db.session.commit()
-#             print("Dropped table 'facility_name_item' successfully.")
-#         else:
-#             print("Table not found.")
-# # flask drop-facility_name_item-table
-
-# @app.cli.command('drop-client_id_item-table')
-# #@requires_roles('sysadmin')
-# def drop_data_client_id_table():
-#     with app.app_context():
-#         inspector = inspect(db.engine)
-#         table_names = inspector.get_table_names()
-#         print(table_names)
-#         if 'client_id_item' in table_names:
-#             sql = text('DROP TABLE client_id_item;')
-#             result = db.session.execute(sql)
-#             db.session.commit()
-#             print("Dropped table 'client_id_item' successfully.")
-#         else:
-#             print("Table not found.")
-# # flask drop-client_id_item-table
-
-@app.cli.command('drop-user-table')
-#@requires_roles('sysadmin')
-def drop_user_table():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        table_names = inspector.get_table_names()
-        print(table_names)
-        if 'user' in table_names:
-            sql = text('DROP TABLE "user";')
-            result = db.session.execute(sql)
-            db.session.commit()
-            print("Dropped table 'user' successfully.")
-        else:
-            print("Table not found.")
-# flask drop-user-table
-
-# @app.cli.command('drop-data-entry-table')
-# def drop_data_entry_table():
-#     with app.app_context():
-#         inspector = inspect(db.engine)
-#         table_names = inspector.get_table_names()
-#         print(table_names)
-#         if 'data_entry' in table_names:
-#             with db.engine.connect() as conn:
-#                 # drop foreign key constraint first
-#                 conn.execute('ALTER TABLE other_table DROP CONSTRAINT fk_name_data_entry;')
-#             db.drop_all(bind=None, tables=[DataEntry.__table__])
-#             print("Dropped table 'data_entry' successfully.")
-#         else:
-#             print("Table not found.")
-# # flask drop-data-entry-table
-
-# @app.cli.command('drop-facility-table')
-# #@requires_roles('sysadmin')
-# def drop_facility_table():
-#     with app.app_context():
-#         inspector = inspect(db.engine)
-#         table_names = inspector.get_table_names()
-#         print(table_names)
-#         if 'facility' in table_names:
-#             # Drop foreign key constraint from data_entry table that references facility table
-#             db.engine.execute('ALTER TABLE data_entry DROP CONSTRAINT fk_data_entry_facility;')
-            
-#             # Drop facility table
-#             sql = text('DROP TABLE facility;')
-#             result = db.session.execute(sql)
-#             db.session.commit()
-#             print("Dropped table 'facility' successfully.")
-#         else:
-#             print("Table not found.")
-# flask drop-facility-table           
-
-# @app.cli.command('drop-facility-table')
-# #@requires_roles('sysadmin')
-# def drop_facility_table():
-#     with app.app_context():
-#         inspector = inspect(db.engine)
-#         table_names = inspector.get_table_names()
-#         print(table_names)
-#         if 'facility' in table_names:
-#             sql = text('DROP TABLE facility;')
-#             result = db.session.execute(sql)
-#             db.session.commit()
-#             print("Dropped table 'facility' successfully.")
-#         else:
-#             print("Table not found.")
-# # flask drop-facility-table
-
-# @app.cli.command('drop-user_id_item-table')
-# #@requires_roles('sysadmin')
-# def drop_data_user_id_table():
-#     with app.app_context():
-#         inspector = inspect(db.engine)
-#         table_names = inspector.get_table_names()
-#         print(table_names)
-#         if 'user_id_item' in table_names:
-#             sql = text('DROP TABLE user_id_item;')
-#             result = db.session.execute(sql)
-#             db.session.commit()
-#             print("Dropped table 'user_id_item' successfully.")
-#         else:
-#             print("Table not found.")
-# # flask drop-user_id_item-table
 
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.utcnow().year}
 
-# @app.route('/dashboard_app')
-# @requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dashboard')
-# def dashboard_app():
+@app.route('/dashboard_app')
+@requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dashboard')
+def dashboard_app():
+    return render_template('new_dashboard.html')
 #     cmd = "streamlit run dashboard_app.py"
 #     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 #     process.terminate()
@@ -850,73 +985,6 @@ dash_app = init_dash(app)
 @login_required
 def render_dashboard():
     return dash_app.index() 
-
-
-
-@app.cli.command('drop-data-entry-table')
-#@requires_roles('sysadmin')
-def drop_data_entry_table():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        table_names = inspector.get_table_names()
-        print(table_names)
-        if 'data_entry' in table_names:
-            sql = text('DROP TABLE data_entry;')
-            try:
-                a = text('ALTER TABLE facility DROP CONSTRAINT fk_facility_name_data_entry;')
-                result = db.session.execute(a)
-                db.session.commit()
-                print("Dropped foreign key constraint 'fk_facility_name_data_entry' from 'facility' table successfully.")
-            except Exception as e:
-                db.session.rollback()
-                print("Error dropping foreign key constraint:", e)
-            result = db.session.execute(sql)
-            db.session.commit()
-            print("Dropped table 'data_entry' successfully.")
-        else:
-            print("Table not found.")
-# flask drop-data-entry-table
-
-@app.cli.command('drop-facility-table')
-#@requires_roles('sysadmin')
-def drop_facility_table():
-    with app.app_context():
-        inspector = inspect(db.engine)
-        table_names = inspector.get_table_names()
-        print(table_names)
-        if 'facility' in table_names:
-            sql = text('DROP TABLE facility CASCADE;')
-            try:
-                db.session.execute(sql)
-                db.session.commit()
-                print("Dropped table 'facility' successfully.")
-            except Exception as e:
-                print("Error dropping table 'facility':", e)
-        else:
-            print("Table not found.")
-
-
-# @app.cli.command('drop-facility-table')
-# #@requires_roles('sysadmin')
-# def drop_facility_table():
-#     with app.app_context():
-#         inspector = inspect(db.engine)
-#         table_names = inspector.get_table_names()
-#         print(table_names)
-#         if 'facility' in table_names:
-#             sql = text('DROP TABLE facility;')
-#             try:
-#                 db.session.execute('ALTER TABLE data_entry DROP CONSTRAINT data_entry_facility_name_fkey;')
-#                 db.session.commit()
-#             except Exception as e:
-#                 db.session.rollback()
-#                 print("Error dropping foreign key constraint:", e)
-#             result = db.session.execute(sql)
-#             db.session.commit()
-#             print("Dropped table 'facility' successfully.")
-#         else:
-#             print("Table not found.")
-# flask drop-facility-table
 
 
 if __name__ == '__main__':

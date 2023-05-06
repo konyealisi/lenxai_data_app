@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" style="height:100vh">
     <div class="spacing-div"></div>
     <div class="d-flex justify-content-near">
         <h4 style="color: white;">Welcome, {{ current_user.username }}!</h4>
@@ -16,7 +16,19 @@
     </div>
     <div class="spacing-div"></div>
     <div class="d-flex justify-content-center">
-        <a href="/download_csv" class="btn btn-primary mb-3">Download CSV</a>
+        <a href="/download_csv" class="btn btn-primary mb-3">Download CSV File</a>
+    </div>
+    <div class="spacing-div"></div>
+    <div class="d-flex justify-content-center">
+        <a href="/download_json" class="btn btn-primary mb-3">Download Json file</a>
+    </div>
+    <div class="spacing-div"></div>
+    <div class="d-flex justify-content-center">
+        <a href="/download_xml" class="btn btn-primary mb-3">Download XML File</a>
+    </div>
+    <div class="spacing-div"></div>
+    <div class="d-flex justify-content-center">
+        <a href="/api/data" class="btn btn-primary mb-3">API access</a>
     </div>
     <div class="spacing-div"></div>
     <div class="d-flex justify-content-end">

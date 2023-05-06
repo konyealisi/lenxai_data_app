@@ -2,11 +2,28 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField, SelectField, DateField, RadioField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-#from wtforms.ext.sqlalchemy.fields import QuerySelectField
+from sqlalchemy import distinct
 from utils import validate_email, validate_username, facility_choices, client_choices
 from wtforms_sqlalchemy.fields import QuerySelectField
-from models import DataEntry, User, db
+from models import DataEntry, User, db, Facility
 from datetime import date
+from flask import current_app
+
+
+def get_state_choices():
+    states = db.session.query(Facility.state).distinct().all()
+    return [(state[0], state[0]) for state in states]
+
+# def get_facility_choices():
+#     with current_app.app_context():
+#         facilities = Facility.query.with_entities(Facility.id, Facility.facility_name).all()
+#         choices = [(facility_id, facility_name) for facility_id, facility_name in facilities]
+#         return choices
+
+
+# # Function to get all facility names from the Facility model
+# def get_facility_names():
+#     return db.session.query(Facility.facility_name).distinct().all()
 
 class DataEntryForm(FlaskForm):
     facility_name = StringField('Facility Name', validators=[DataRequired(), Length(max=100)])
@@ -38,6 +55,8 @@ class RegistrationFormAdmin(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     role = SelectField('Role', choices=[('admin', 'Admin'), ('superuser', 'Superuser'), ('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant'), ('dashboard', 'Dashboard Viewer')], validators=[DataRequired()])
+    state = SelectField('State', choices=get_state_choices, coerce=str)
+    facility_name = SelectField("Facility Name", choices=[], validate_choice=True, coerce=int)
     submit = SubmitField('Sign Up')
 
 # Registration form - Superuser: this is the form for registering new users by a superuser
@@ -48,6 +67,8 @@ class RegistrationFormSuperuser(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     role = SelectField('Role', choices=[('datavalidator', 'Data Validator'), ('dataentrant', 'Data Entrant'), ('dashboard', 'Dashboard Viewer')], validators=[DataRequired()])
+    state = SelectField('State', choices=get_state_choices, coerce=str)
+    facility_name = SelectField("Facility Name", choices=[], validate_choice=True, coerce=int)
     submit = SubmitField('Sign Up')
 
 

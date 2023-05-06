@@ -24,14 +24,24 @@
         .spacing-div {
             margin: 1rem 0;
         }
+        .page-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        }
+
+        .content-wrap {
+        flex: 1;
+        }
+
         .footer {
-            text-align: center;
-            padding: 10px;
-            background-color: #333;
-            color: white;
-            position: absolute;
-            bottom: 0;
-            width: 100%;
+        text-align: center;
+        padding: 10px;
+        background-color: #333;
+        color: white;
+        position: absolute;
+        margin: 0;
+        width: 100%;
         }
     </style>
 </head>
@@ -129,6 +139,9 @@
             });
     
         });
+
+        // Trigger the change event on the facility dropdown after populating it
+        $('select[name="facility_name"]').trigger('change');
     
         $('select[name="client_id"]').change(function() {
             let clientId = $(this).val();
