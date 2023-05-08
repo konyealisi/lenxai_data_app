@@ -32,25 +32,59 @@ from utils import facility_choices, client_choices, allowed_file, calculate_age,
 from models import db, User, DataEntry, Facility#, update_all_facilities, update_all_facilities_txcurr_pr, update_all_facilities_txcurr_cr, update_all_facilities_txcurr_ndr, update_all_facilities_txcurr_vf
 from sqlalchemy.engine.reflection import Inspector
 from flask.cli import AppGroup
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Message, Mail
 
 from dashboard import init_dash
 
 
 
 app = Flask(__name__)
+
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SECRET_KEY'] = os.environ.get('FLASK_APP_SECRET_KEY', 'fallback_secret_key')
 
-with open('C:/Users/konye/Documents/mydoc.json') as f:
-    secrets = json.load(f)
+# Load database connection details from JSON file
+secrets_file = 'C:/Users/konye/Documents/mydoc.json'
+try:
+    with open(secrets_file) as f:
+        secrets = json.load(f)
+except FileNotFoundError:
+    print(f"Error: {secrets_file} not found.")
+    exit(1)
 
-db_user = secrets['db_user']
-db_password = secrets['db_password']
-db_host = secrets['db_host']
-db_name = secrets['db_name']
+db_user = secrets.get('db_user', None)
+db_password = secrets.get('db_password', None)
+db_host = secrets.get('db_host', None)
+db_name = secrets.get('db_name', None)
+sender_username = secrets.get('sender_username', None)
+sender_passward = secrets.get('sender_passward', None)
+sender_server = secrets.get('sender_server', None)
+
+# Check if any of the required values are missing
+if None in (db_user, db_password, db_host, db_name):
+    print("Error: Missing database configuration values in the JSON file.")
+    exit(1)
+
+# # Database connection settings
+# db_user = os.environ.get('DB_USER_ndqadata')
+# db_password = os.environ.get('DB_PASSWORD_ndqadata')
+# db_host = os.environ.get('DB_HOST_ndqadata')
+# db_name = os.environ.get('DB_NAME_ndqadata')
+
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_user}:{db_password}@{db_host}/{db_name}'
 
+# app.config.update(
+#     MAIL_SERVER=sender_server,
+#     MAIL_PORT=465,
+#     MAIL_USE_SSL=True,
+#     MAIL_USERNAME=sender_username,
+#     MAIL_PASSWORD=sender_passward
+# )
+# mail = Mail(app)
+
+# db = SQLAlchemy()
 db.init_app(app)
 
 # Create a group of commands for user management
@@ -157,6 +191,14 @@ def login():
     if login_form.validate_on_submit():
         user = User.query.filter_by(email=login_form.email.data).first()
         if user and user.check_password(login_form.password.data):
+
+            # if user.is_active:
+            #     login_user(user)
+            #     flash('You have successfully logged in.', 'success')
+            #     next_page = request.args.get('next')
+            #     return redirect(next_page) if next_page else redirect(url_for('landing'))
+            # else:
+            #     return "Please verify your email before logging in."
             login_user(user)
             flash('You have successfully logged in.', 'success')
             next_page = request.args.get('next')
@@ -164,6 +206,38 @@ def login():
         else:
             flash('Login unsuccessful.  Please check your email and password.', 'danger')
     return render_template('login.html', title='Login', login_form=login_form)#, register_form=register_form)
+
+
+# s = URLSafeTimedSerializer(app.config["SECRET_KEY"])
+
+# def generate_confirmation_token(email):
+#     return s.dumps(email, salt=app.config["SECURITY_PASSWORD_SALT"])
+
+# def confirm_token(token, expiration=3600):
+#     return s.loads(token, salt=app.config["SECURITY_PASSWORD_SALT"], max_age=expiration)
+
+# @app.route('/confirm_email/<token>')
+# def confirm_email(token):
+#     try:
+#         email = confirm_token(token)
+#     except Exception as e:
+#         return str(e)
+
+#     user = User.query.filter_by(email=email).first()
+
+#     if user:
+#         user.is_active = True
+#         db.session.commit()
+#         return "Email confirmed successfully!"
+#     else:
+#         return "User not found!"
+
+
+# def send_verification_email(email, token):
+#     confirm_url = url_for('confirm_email', token=token, _external=True)
+#     msg = Message("Please Confirm Your Email", sender="noreply@example.com", recipients=[email])
+#     msg.body = f"Click the following link to confirm your email: {confirm_url}"
+#     mail.send(msg)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -195,12 +269,18 @@ def register():
                 email=email,
                 role=role,
                 state=state if state != '' else None,
-                facility_name=facility_name if facility_name != '' else None
+                facility_name=facility_name if facility_name != '' else None#, is_active=False
             )
             user.set_password(password)
 
             db.session.add(user)
             db.session.commit()
+
+            # # Send the email verification link
+            # token = generate_confirmation_token(email)
+            # send_verification_email(email, token)
+
+            # return "Registration successful! Please verify your email."
 
             flash('Your account has been created! You can now log in.', 'success')
             return redirect(url_for('login'))
@@ -208,6 +288,56 @@ def register():
             flash("Passwords do not match.", 'error')
 
     return render_template('register.html', title='Register', register_form=register_form)
+
+
+# def send_password_reset_email(email, token):
+#     reset_url = url_for('reset_password', token=token, _external=True)
+#     msg = Message("Reset Your Password", sender="noreply@example.com", recipients=[email])
+#     msg.body = f"Click the following link to reset your password: {reset_url}"
+#     mail.send(msg)
+
+# # Route to handle password reset request
+# @app.route('/forgot_password', methods=["POST"])
+# def forgot_password():
+#     email = request.form["email"]
+    
+#     # Verify if the email exists in your database
+#     user = User.query.filter_by(email=email).first()
+    
+#     if user:
+#         token = generate_confirmation_token(email)
+#         send_password_reset_email(email, token)
+#         flash("Password reset email sent!", "success")
+#         # You can redirect to a relevant page, such as the login page
+#         return redirect(url_for("login"))
+#     else:
+#         flash("Email address not found!", "error")
+#         # Redirect to the same forgot_password page or another relevant page
+#         return redirect(url_for("forgot_password"))
+
+# @app.route('/reset_password/<token>', methods=["GET", "POST"])
+# def reset_password(token):
+#     try:
+#         email = confirm_token(token)
+#     except Exception as e:
+#         return str(e)
+
+#     user = User.query.filter_by(email=email).first()
+#     if user is None:
+#         flash("Invalid token or email not found!", "error")
+#         return redirect(url_for("forgot_password"))
+
+#     if request.method == "POST":
+#         new_password = request.form["new_password"]
+        
+#         # Update the user's password in the database
+#         user.password = generate_password_hash(new_password)
+#         db.session.commit()
+
+#         flash("Password reset successfully!", "success")
+#         return redirect(url_for("login"))
+
+#     return render_template("reset_password.html", token=token)
 
 
 # User route - lets the sysadmin and admin user view all registered users on the platform
@@ -970,10 +1100,10 @@ def get_facilities():
 def inject_current_year():
     return {'current_year': datetime.utcnow().year}
 
-@app.route('/dashboard_app')
-@requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dashboard')
-def dashboard_app():
-    return render_template('new_dashboard.html')
+# @app.route('/dashboard_app')
+# @requires_roles('sysadmin', 'admin', 'superuser', 'datavalidator', 'dashboard')
+# def dashboard_app():
+#     return render_template('new_dashboard.html')
 #     cmd = "streamlit run dashboard_app.py"
 #     process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 #     process.terminate()
@@ -990,4 +1120,5 @@ def render_dashboard():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='192.168.0.9', port=5000, debug=True)
+    #app.run(host='192.168.0.9', port=5000, debug=True)
+    app.run(debug=True, host='0.0.0.0')

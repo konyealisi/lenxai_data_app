@@ -6,8 +6,9 @@ import plotly.express as px
 import plotly.graph_objs as go
 from dash import dash_table
 import seaborn as sns
+from plotly.subplots import make_subplots
 
-import pandas as pd
+import pandas as pd, numpy as np
 
 def facility_choices():
     facilities = DataEntry.query.with_entities(DataEntry.facility_name, DataEntry.facility_name).distinct().all()
@@ -666,3 +667,332 @@ def bar_chart_facility(df):
     fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
     return fig
 
+def plot_txcurr_pr_vs_txcurr_ndr(df):
+    # Count the occurrences of 'yes' for curr_pr and curr_ll
+    count_curr_pr_yes = len(df[df['curr_pr'] == 'yes'])
+    count_curr_ll_yes = len(df[df['curr_ll'] == 'yes'])
+    
+    # Create a horizontal bar chart
+    fig = go.Figure(go.Bar(x=[count_curr_pr_yes, count_curr_ll_yes], 
+                           y=['Validated Drug Pick-up Pharmacy', 'Reported NDR'], 
+                           text=[count_curr_pr_yes, count_curr_ll_yes], 
+                           textposition='auto', 
+                           orientation='h'))
+
+    fig.update_layout(
+        title="Comparison of Reported TX_CURR and Verified TX_CURR(Confirmed Pharmacy Pick-up)",
+        xaxis_title="Treatment Curr",
+        yaxis_title="Variable",
+        height=300,
+        font=dict(color='black', size=14),
+        legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
+    )
+
+    return fig
+
+
+def plot_txcurr_cr_vs_txcurr_ndr(df):
+    # Count the occurrences of 'yes' for curr_pr and curr_ll
+    count_curr_cr_yes = len(df[df['curr_cr'] == 'yes'])
+    count_curr_ll_yes = len(df[df['curr_ll'] == 'yes'])
+    
+    # Create a horizontal bar chart
+    fig = go.Figure(go.Bar(x=[count_curr_cr_yes, count_curr_ll_yes], 
+                           y=['Validated Client Folder', 'Reported NDR'], 
+                           text=[count_curr_cr_yes, count_curr_ll_yes], 
+                           textposition='auto', 
+                           orientation='h'))
+
+    fig.update_layout(
+        title="Comparison of Reported TX_CURR and Verified TX_CURR(Client Folder)",
+        xaxis_title="Treatment Curr",
+        yaxis_title="Variable",
+        height=300,
+        font=dict(color='black', size=14),
+        legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
+    )
+
+    return fig
+
+def plot_txcurr_pr_vs_txcurr_cr(df):
+    # Count the occurrences of 'yes' for curr_pr and curr_ll
+    count_curr_pr_yes = len(df[df['curr_pr'] == 'yes'])
+    count_curr_cr_yes = len(df[df['curr_cr'] == 'yes'])
+    
+    # Create a horizontal bar chart
+    fig = go.Figure(go.Bar(x=[count_curr_pr_yes, count_curr_cr_yes], 
+                           y=['Validated Drug Pick-up Pharmacy', 'Validated Client Folder'], 
+                           text=[count_curr_pr_yes, count_curr_cr_yes], 
+                           textposition='auto', 
+                           orientation='h'))
+
+    fig.update_layout(
+        title="Comparison of Verified TX_CURR(Confirmed Pharmacy Pick-up) and Verified TX_CURR(Client Folder)",
+        xaxis_title="Treatment Curr",
+        yaxis_title="Variable",
+        height=300,
+        font=dict(color='black', size=14),
+        legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
+    )
+
+    return fig
+
+def plot_weekly_curr_pr(df):
+    df['entry_datetime_pr'] = pd.to_datetime(df['entry_datetime_pr'])
+    
+    filtered_df = df[(df['entry_datetime_pr'] >= '2023-05-01') & (df['entry_datetime_pr'] <= '2023-07-30')]
+    weekly_grouped_pr = filtered_df[filtered_df['curr_pr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_pr'].dt.to_period("W")).size().reset_index(name='count')
+
+    # Generate a DataFrame with all weeks between April 24th and July 30th
+    all_weeks = pd.date_range(start='2023-05-01', end='2023-07-30', freq='W').to_period("W").to_frame(index=False, name='entry_datetime_pr')
+
+    # Merge weekly_grouped_pr with all_weeks, filling missing values with 0
+    merged_weekly_grouped_pr = all_weeks.merge(weekly_grouped_pr, on='entry_datetime_pr', how='left').fillna(0)
+
+    # Create a new column with the format "wk1", "wk2", etc.
+    merged_weekly_grouped_pr['week_label'] = 'wk' + (merged_weekly_grouped_pr.index + 1).astype(str)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(x=merged_weekly_grouped_pr['week_label'],
+                         y=merged_weekly_grouped_pr['count'],
+                         name='Weekly curr_pr'))
+
+    fig.update_layout(title='Weekly Verified TX_CURR - Pharmacy Pick up',
+                      xaxis=dict(title='Weeks', ticktext=merged_weekly_grouped_pr['week_label'], tickvals=merged_weekly_grouped_pr['week_label']),
+                      yaxis_title='Verified TX_CURR - Pharm',
+                      height=270,
+                      legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))
+
+    return fig
+
+
+def plot_weekly_curr_cr(df):
+    df['entry_datetime_cr'] = pd.to_datetime(df['entry_datetime_cr'])
+    
+    filtered_df = df[(df['entry_datetime_cr'] >= '2023-05-01') & (df['entry_datetime_cr'] <= '2023-07-30')]
+    weekly_grouped_cr = filtered_df[filtered_df['curr_cr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_cr'].dt.to_period("W")).size().reset_index(name='count')
+
+    # Generate a DataFrame with all weeks between April 24th and July 30th
+    all_weeks = pd.date_range(start='2023-05-01', end='2023-07-30', freq='W').to_period("W").to_frame(index=False, name='entry_datetime_cr')
+
+    # Merge weekly_grouped_cr with all_weeks, filling missing values with 0
+    merged_weekly_grouped_cr = all_weeks.merge(weekly_grouped_cr, on='entry_datetime_cr', how='left').fillna(0)
+
+    # Create a new column with the format "wk1", "wk2", etc.
+    merged_weekly_grouped_cr['week_label'] = 'wk' + (merged_weekly_grouped_cr.index + 1).astype(str)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(x=merged_weekly_grouped_cr['week_label'],
+                         y=merged_weekly_grouped_cr['count'],
+                         name='Weekly curr_cr'))
+
+    fig.update_layout(title='Weekly Verified TX_CURR -Client Filder',
+                      xaxis=dict(title='Weeks', ticktext=merged_weekly_grouped_cr['week_label'], tickvals=merged_weekly_grouped_cr['week_label']),
+                      yaxis_title='Verified TX_CURR - Folder',
+                      height=270,
+                      legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))
+
+    return fig
+
+def plot_progress_pr_towards_ll(df):
+    curr_pr_yes_count = df[df['curr_pr'].isin(['yes', 'no'])].shape[0]
+    curr_ll_yes_count = df[df['curr_ll'] == 'yes'].shape[0]
+    # Avoid dividing by zero
+    if curr_ll_yes_count != 0:
+        rate = (curr_pr_yes_count / curr_ll_yes_count) * 100
+    else:
+        rate = 0
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(y=['Progress'],
+                         x=[curr_ll_yes_count],
+                         name='Total Reported',
+                         base=0,
+                         width=0.2,
+                         orientation='h'
+                         ))
+
+    fig.add_trace(go.Bar(y=['Progress'],
+                         x=[curr_pr_yes_count],
+                         name='Total Verified',
+                         base=0,
+                         width=0.1,
+                         orientation='h',
+                         text=f'{rate:.2f}%',
+                         textposition='outside',
+                         textfont_color='white'
+                         ))
+
+    fig.update_layout(barmode='overlay',
+                      title='Progress in Treatment Current Verification (Phamarcy Drug Pick up)',
+                      xaxis_title='TX_CURR',
+                      height=270,
+                      legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))
+
+    return fig
+
+
+
+def plot_progress_cr_towards_ll(df):
+    curr_cr_yes_count = df[df['curr_cr'].isin(['yes', 'no'])].shape[0]
+    curr_ll_yes_count = df[df['curr_ll'] == 'yes'].shape[0]
+    # Avoid dividing by zero
+    if curr_ll_yes_count != 0:
+        rate = (curr_cr_yes_count / curr_ll_yes_count) * 100
+    else:
+        rate = 0
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(y=['Progress'],
+                         x=[curr_ll_yes_count],
+                         name='Total Reported',
+                         base=0,
+                         width=0.2,
+                         orientation='h'
+                         ))
+
+    fig.add_trace(go.Bar(y=['Progress'],
+                         x=[curr_cr_yes_count],
+                         name='Total Verified',
+                         base=0,
+                         width=0.1,
+                         orientation='h',
+                         text=f'{rate:.2f}%',
+                         textposition='outside',
+                         textfont_color='white'
+                         ))
+
+    fig.update_layout(barmode='overlay',
+                      title='Progress in Treatment Current Verification (Client Folder)',
+                      xaxis_title='TX_CURR',
+                      height=270,
+                      legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))
+
+    return fig
+
+
+def plot_daily_curr_pr(df):
+    df['entry_datetime_pr'] = pd.to_datetime(df['entry_datetime_pr'])
+    
+    filtered_df = df[(df['entry_datetime_pr'] >= '2023-05-01') & (df['entry_datetime_pr'] <= '2023-07-30')]
+    daily_grouped_pr = filtered_df[filtered_df['curr_pr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_pr'].dt.to_period("D")).size().reset_index(name='count')
+
+    # Generate a DataFrame with all days between May 1st and July 30th
+    all_days = pd.date_range(start='2023-05-01', end='2023-07-30', freq='D').to_period("D").to_frame(index=False, name='entry_datetime_pr')
+
+    # Merge daily_grouped_pr with all_days, filling missing values with 0
+    merged_daily_grouped_pr = all_days.merge(daily_grouped_pr, on='entry_datetime_pr', how='left').fillna(0)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(x=merged_daily_grouped_pr['entry_datetime_pr'].astype(str),
+                         y=merged_daily_grouped_pr['count'],
+                         name='Daily curr_pr'))
+
+    fig.update_layout(title='Daily Verified TX_CURR - Pharmacy Pick up',
+                      xaxis=dict(title='Days', ticktext=merged_daily_grouped_pr['entry_datetime_pr'].astype(str), tickvals=merged_daily_grouped_pr['entry_datetime_pr'].astype(str)),
+                      yaxis_title='Verified TX_CURR - Pharm',
+                      height=350,
+                      legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))
+
+    return fig
+
+def plot_daily_curr_cr(df):
+    df['entry_datetime_cr'] = pd.to_datetime(df['entry_datetime_cr'])
+    
+    filtered_df = df[(df['entry_datetime_cr'] >= '2023-05-01') & (df['entry_datetime_cr'] <= '2023-07-30')]
+    daily_grouped_cr = filtered_df[filtered_df['curr_cr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_cr'].dt.to_period("D")).size().reset_index(name='count')
+
+    # Generate a DataFrame with all days between May 1st and July 30th
+    all_days = pd.date_range(start='2023-05-01', end='2023-07-30', freq='D').to_period("D").to_frame(index=False, name='entry_datetime_cr')
+
+    # Merge daily_grouped_pr with all_days, filling missing values with 0
+    merged_daily_grouped_cr = all_days.merge(daily_grouped_cr, on='entry_datetime_cr', how='left').fillna(0)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(x=merged_daily_grouped_cr['entry_datetime_cr'].astype(str),
+                         y=merged_daily_grouped_cr['count'],
+                         name='Daily curr_cr'))
+
+    fig.update_layout(title='Daily Verified TX_CURR - Folder',
+                      xaxis=dict(title='Days', ticktext=merged_daily_grouped_cr['entry_datetime_cr'].astype(str), tickvals=merged_daily_grouped_cr['entry_datetime_cr'].astype(str)),
+                      yaxis_title='Verified TX_CURR - Folder',
+                      height=350,
+                      legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))
+
+    return fig
+
+def hplot_daily_curr_cr(df):
+    df['entry_datetime_cr'] = pd.to_datetime(df['entry_datetime_cr'])
+
+    filtered_df = df[(df['entry_datetime_cr'] >= '2023-05-01') & (df['entry_datetime_cr'] <= '2023-07-30')]
+    daily_grouped_cr = filtered_df[filtered_df['curr_cr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_cr'].dt.to_period("D")).size().reset_index(name='count')
+
+    # Generate a DataFrame with all days between May 1st and July 30th
+    all_days = pd.date_range(start='2023-05-01', end='2023-07-30', freq='D').to_period("D").to_frame(index=False, name='entry_datetime_cr')
+
+    # Merge daily_grouped_pr with all_days, filling missing values with 0
+    merged_daily_grouped_cr = all_days.merge(daily_grouped_cr, on='entry_datetime_cr', how='left').fillna(0)
+
+    # Reshape the data to be used in a heatmap
+    heatmap_data = merged_daily_grouped_cr.pivot_table(index='entry_datetime_cr', values='count', aggfunc=np.sum)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Heatmap(
+        z=heatmap_data.values,
+        x=merged_daily_grouped_cr['entry_datetime_cr'].astype(str),
+        y=['Verified TX_CURR - Folder'],
+        colorscale='Viridis',
+        name='Daily curr_cr',
+    ))
+
+    fig.update_layout(
+        title='Daily Verified TX_CURR - Folder',
+        xaxis=dict(title='Days', ticktext=merged_daily_grouped_cr['entry_datetime_cr'].astype(str), tickvals=merged_daily_grouped_cr['entry_datetime_cr'].astype(str)),
+        yaxis_title='Verified TX_CURR - Folder',
+        height=350,
+        legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
+    )
+
+    return fig
+
+def hplot_daily_curr_pr(df):
+    df['entry_datetime_pr'] = pd.to_datetime(df['entry_datetime_pr'])
+
+    filtered_df = df[(df['entry_datetime_pr'] >= '2023-05-01') & (df['entry_datetime_pr'] <= '2023-07-30')]
+    daily_grouped_pr = filtered_df[filtered_df['curr_cr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_pr'].dt.to_period("D")).size().reset_index(name='count')
+
+    # Generate a DataFrame with all days between May 1st and July 30th
+    all_days = pd.date_range(start='2023-05-01', end='2023-07-30', freq='D').to_period("D").to_frame(index=False, name='entry_datetime_pr')
+
+    # Merge daily_grouped_pr with all_days, filling missing values with 0
+    merged_daily_grouped_pr = all_days.merge(daily_grouped_pr, on='entry_datetime_pr', how='left').fillna(0)
+
+    # Reshape the data to be used in a heatmap
+    heatmap_data = merged_daily_grouped_pr.pivot_table(index='entry_datetime_pr', values='count', aggfunc=np.sum)
+
+    fig = go.Figure()
+
+    fig.add_trace(go.Heatmap(
+        z=heatmap_data.values,
+        x=merged_daily_grouped_pr['entry_datetime_pr'].astype(str),
+        y=['Verified TX_CURR - Folder'],
+        colorscale='Viridis',
+        name='Daily curr_cr',
+    ))
+
+    fig.update_layout(
+        title='Daily Verified TX_CURR - Folder',
+        xaxis=dict(title='Days', ticktext=merged_daily_grouped_pr['entry_datetime_pr'].astype(str), tickvals=merged_daily_grouped_pr['entry_datetime_pr'].astype(str)),
+        yaxis_title='Verified TX_CURR - Folder',
+        height=350,
+        legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
+    )
+
+    return fig

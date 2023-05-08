@@ -5,12 +5,32 @@ import pandas as pd
 import os
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+import json
 
-# Database connection settings
-db_user = os.environ.get('DB_USER_ndqadata')
-db_password = os.environ.get('DB_PASSWORD_ndqadata')
-db_host = os.environ.get('DB_HOST_ndqadata')
-db_name = os.environ.get('DB_NAME_ndqadata')
+# # Database connection settings
+# db_user = os.environ.get('DB_USER_ndqadata')
+# db_password = os.environ.get('DB_PASSWORD_ndqadata')
+# db_host = os.environ.get('DB_HOST_ndqadata')
+# db_name = os.environ.get('DB_NAME_ndqadata')
+
+# Load database connection details from JSON file
+secrets_file = 'C:/Users/konye/Documents/mydoc.json'
+try:
+    with open(secrets_file) as f:
+        secrets = json.load(f)
+except FileNotFoundError:
+    print(f"Error: {secrets_file} not found.")
+    exit(1)
+
+db_user = secrets.get('db_user', None)
+db_password = secrets.get('db_password', None)
+db_host = secrets.get('db_host', None)
+db_name = secrets.get('db_name', None)
+
+# Check if any of the required values are missing
+if None in (db_user, db_password, db_host, db_name):
+    print("Error: Missing database configuration values in the JSON file.")
+    exit(1)
 
 # Connect to the database
 db_url = f"postgresql://{db_user}:{db_password}@{db_host}/{db_name}"

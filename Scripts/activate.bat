@@ -34,4 +34,3 @@ if defined _OLD_CODEPAGE (
 )
 
 set FLASK_APP=app.py
-
