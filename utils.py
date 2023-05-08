@@ -737,14 +737,14 @@ def plot_txcurr_pr_vs_txcurr_cr(df):
 
     return fig
 
-def plot_weekly_curr_pr(df):
+def plot_weekly_curr_pr(df, start, stop):
     df['entry_datetime_pr'] = pd.to_datetime(df['entry_datetime_pr'])
     
-    filtered_df = df[(df['entry_datetime_pr'] >= '2023-05-01') & (df['entry_datetime_pr'] <= '2023-07-30')]
+    filtered_df = df[(df['entry_datetime_pr'] >= start) & (df['entry_datetime_pr'] <= stop)]
     weekly_grouped_pr = filtered_df[filtered_df['curr_pr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_pr'].dt.to_period("W")).size().reset_index(name='count')
 
     # Generate a DataFrame with all weeks between April 24th and July 30th
-    all_weeks = pd.date_range(start='2023-05-01', end='2023-07-30', freq='W').to_period("W").to_frame(index=False, name='entry_datetime_pr')
+    all_weeks = pd.date_range(start=start, end=stop, freq='W').to_period("W").to_frame(index=False, name='entry_datetime_pr')
 
     # Merge weekly_grouped_pr with all_weeks, filling missing values with 0
     merged_weekly_grouped_pr = all_weeks.merge(weekly_grouped_pr, on='entry_datetime_pr', how='left').fillna(0)
@@ -767,14 +767,14 @@ def plot_weekly_curr_pr(df):
     return fig
 
 
-def plot_weekly_curr_cr(df):
+def plot_weekly_curr_cr(df, start, stop):
     df['entry_datetime_cr'] = pd.to_datetime(df['entry_datetime_cr'])
     
-    filtered_df = df[(df['entry_datetime_cr'] >= '2023-05-01') & (df['entry_datetime_cr'] <= '2023-07-30')]
+    filtered_df = df[(df['entry_datetime_cr'] >= start) & (df['entry_datetime_cr'] <= stop)]
     weekly_grouped_cr = filtered_df[filtered_df['curr_cr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_cr'].dt.to_period("W")).size().reset_index(name='count')
 
     # Generate a DataFrame with all weeks between April 24th and July 30th
-    all_weeks = pd.date_range(start='2023-05-01', end='2023-07-30', freq='W').to_period("W").to_frame(index=False, name='entry_datetime_cr')
+    all_weeks = pd.date_range(start=start, end=stop, freq='W').to_period("W").to_frame(index=False, name='entry_datetime_cr')
 
     # Merge weekly_grouped_cr with all_weeks, filling missing values with 0
     merged_weekly_grouped_cr = all_weeks.merge(weekly_grouped_cr, on='entry_datetime_cr', how='left').fillna(0)
@@ -875,14 +875,14 @@ def plot_progress_cr_towards_ll(df):
     return fig
 
 
-def plot_daily_curr_pr(df):
+def plot_daily_curr_pr(df, start, stop):
     df['entry_datetime_pr'] = pd.to_datetime(df['entry_datetime_pr'])
     
-    filtered_df = df[(df['entry_datetime_pr'] >= '2023-05-01') & (df['entry_datetime_pr'] <= '2023-07-30')]
+    filtered_df = df[(df['entry_datetime_pr'] >= start) & (df['entry_datetime_pr'] <= stop)]
     daily_grouped_pr = filtered_df[filtered_df['curr_pr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_pr'].dt.to_period("D")).size().reset_index(name='count')
 
     # Generate a DataFrame with all days between May 1st and July 30th
-    all_days = pd.date_range(start='2023-05-01', end='2023-07-30', freq='D').to_period("D").to_frame(index=False, name='entry_datetime_pr')
+    all_days = pd.date_range(start=start, end=stop, freq='D').to_period("D").to_frame(index=False, name='entry_datetime_pr')
 
     # Merge daily_grouped_pr with all_days, filling missing values with 0
     merged_daily_grouped_pr = all_days.merge(daily_grouped_pr, on='entry_datetime_pr', how='left').fillna(0)
@@ -901,14 +901,14 @@ def plot_daily_curr_pr(df):
 
     return fig
 
-def plot_daily_curr_cr(df):
+def plot_daily_curr_cr(df, start, stop):
     df['entry_datetime_cr'] = pd.to_datetime(df['entry_datetime_cr'])
     
-    filtered_df = df[(df['entry_datetime_cr'] >= '2023-05-01') & (df['entry_datetime_cr'] <= '2023-07-30')]
+    filtered_df = df[(df['entry_datetime_cr'] >= start) & (df['entry_datetime_cr'] <= stop)]
     daily_grouped_cr = filtered_df[filtered_df['curr_cr'].isin(['yes', 'no'])].groupby(filtered_df['entry_datetime_cr'].dt.to_period("D")).size().reset_index(name='count')
 
     # Generate a DataFrame with all days between May 1st and July 30th
-    all_days = pd.date_range(start='2023-05-01', end='2023-07-30', freq='D').to_period("D").to_frame(index=False, name='entry_datetime_cr')
+    all_days = pd.date_range(start= start, end=stop, freq='D').to_period("D").to_frame(index=False, name='entry_datetime_cr')
 
     # Merge daily_grouped_pr with all_days, filling missing values with 0
     merged_daily_grouped_cr = all_days.merge(daily_grouped_cr, on='entry_datetime_cr', how='left').fillna(0)

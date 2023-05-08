@@ -57,9 +57,8 @@ merged_df['curr_pr'] = merged_df['curr_pr'].str.lower().str.strip()
 
 
 layout = dbc.Container([
-    dbc.Row([
-        dbc.Col(html.H6("Filters", style={'color': 'white'}, className='text-center'), className="mb-3 mt-3")
-    ]),
+    html.Br(),
+    html.Br(),
     dbc.Row([
         dbc.Col([
             html.Label("State", style={'color': 'white'}),
@@ -96,13 +95,13 @@ layout = dbc.Container([
         dbc.Col(html.H3("Progress", className='text-center'), className="mb-4 mt-4", style={'color': 'white'})
     ]),
     dbc.Row([
-        dbc.Col(dcc.Graph(id='prog'), width=7),
-        dbc.Col(dcc.Graph(id='prog1'), width=5),
+        dbc.Col(dcc.Graph(id='prog'), width=8),
+        dbc.Col(dcc.Graph(id='prog1'), width=4),
     ]),
     html.Br(),
     dbc.Row([
-        dbc.Col(dcc.Graph(id='prog2'), width=7),
-        dbc.Col(dcc.Graph(id='prog3'), width=5),
+        dbc.Col(dcc.Graph(id='prog2'), width=8),
+        dbc.Col(dcc.Graph(id='prog3'), width=4),
     ]),
     html.Br(),
     dbc.Row([

@@ -303,7 +303,8 @@ def init_dash(app):
         
         return plot_txcurr_pr_vs_txcurr_ndr(filtered_df), plot_txcurr_cr_vs_txcurr_ndr(filtered_df), plot_txcurr_pr_vs_txcurr_cr(filtered_df)
 
-    
+    start ='2023-05-01'
+    stop ='2023-05-31'
     #Progress Analytics
     @app.callback(
         [Output('prog', 'figure'),
@@ -338,7 +339,7 @@ def init_dash(app):
         if 'All' not in age_group_filter3:
             filtered_df = filtered_df[filtered_df['age_group'].isin(age_group_filter3)]
 
-        return plot_progress_pr_towards_ll(filtered_df), plot_weekly_curr_pr(filtered_df), plot_progress_cr_towards_ll(filtered_df), plot_weekly_curr_cr(filtered_df), plot_daily_curr_pr(filtered_df), plot_daily_curr_cr(filtered_df)
+        return plot_progress_pr_towards_ll(filtered_df), plot_weekly_curr_pr(filtered_df, start, stop), plot_progress_cr_towards_ll(filtered_df), plot_weekly_curr_cr(filtered_df, start, stop), plot_daily_curr_pr(filtered_df, start, stop), plot_daily_curr_cr(filtered_df,start, stop)
 
     
     return app

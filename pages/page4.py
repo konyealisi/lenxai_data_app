@@ -57,9 +57,11 @@ merged_df['curr_pr'] = merged_df['curr_pr'].str.lower().str.strip()
 
 
 layout = dbc.Container([
-    dbc.Row([
-        dbc.Col(html.H6("Filters", style={'color': 'white'}, className='text-center'), className="mb-3 mt-3")
-    ]),
+    # dbc.Row([
+    #     dbc.Col(html.H6("Filters", style={'color': 'white'}, className='text-center'), className="mb-3 mt-3")
+    # ]),
+    html.Br(),
+    html.Br(),
     dbc.Row([
         dbc.Col([
             html.Label("State", style={'color': 'white'}),
