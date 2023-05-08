@@ -894,7 +894,7 @@ def plot_daily_curr_pr(df, start, stop):
                          name='Daily curr_pr'))
 
     fig.update_layout(title='Daily Verified TX_CURR - Pharmacy Pick up',
-                      xaxis=dict(title='Days', ticktext=merged_daily_grouped_pr['entry_datetime_pr'].astype(str), tickvals=merged_daily_grouped_pr['entry_datetime_pr'].astype(str)),
+                      xaxis=dict(title='Days', tickangle=45, ticktext=merged_daily_grouped_pr['entry_datetime_pr'].astype(str), tickvals=merged_daily_grouped_pr['entry_datetime_pr'].astype(str)),
                       yaxis_title='Verified TX_CURR - Pharm',
                       height=350,
                       legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))
@@ -920,7 +920,7 @@ def plot_daily_curr_cr(df, start, stop):
                          name='Daily curr_cr'))
 
     fig.update_layout(title='Daily Verified TX_CURR - Folder',
-                      xaxis=dict(title='Days', ticktext=merged_daily_grouped_cr['entry_datetime_cr'].astype(str), tickvals=merged_daily_grouped_cr['entry_datetime_cr'].astype(str)),
+                      xaxis=dict(title='Days', tickangle=45, ticktext=merged_daily_grouped_cr['entry_datetime_cr'].astype(str), tickvals=merged_daily_grouped_cr['entry_datetime_cr'].astype(str)),
                       yaxis_title='Verified TX_CURR - Folder',
                       height=350,
                       legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))

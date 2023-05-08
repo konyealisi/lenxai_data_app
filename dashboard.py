@@ -9,6 +9,7 @@ from pages import page1, page2, page3, page4#, page5
 import os
 import pandas as pd
 import numpy as np
+from datetime import date as d
 import plotly.express as px
 import plotly.graph_objs as go
 from sqlalchemy import create_engine, text
@@ -304,7 +305,8 @@ def init_dash(app):
         return plot_txcurr_pr_vs_txcurr_ndr(filtered_df), plot_txcurr_cr_vs_txcurr_ndr(filtered_df), plot_txcurr_pr_vs_txcurr_cr(filtered_df)
 
     start ='2023-05-01'
-    stop ='2023-05-31'
+    stop =f'{d.today().year}-{d.today().month}-{d.today().day+7}'#
+    # stop = '2023-05-15'
     #Progress Analytics
     @app.callback(
         [Output('prog', 'figure'),
