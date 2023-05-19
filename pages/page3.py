@@ -62,31 +62,31 @@ layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Label("State", style={'color': 'white'}),
-            dcc.Dropdown(id='state-filter',
+            dcc.Dropdown(id='state-filter3',
                         options=[{'label': i, 'value': i} for i in (['All'] + list(merged_df['state'].unique()))],
                         value=['All'],
                         multi=True)], width={"xs": 6, "sm": 4, "md": 2}),
         dbc.Col([
             html.Label("LGA", style={'color': 'white'}),
-            dcc.Dropdown(id='lga-filter',
+            dcc.Dropdown(id='lga-filter3',
                         options=[{'label': i, 'value': i} for i in (['All'] + list(merged_df['lga'].unique()))],
                         value=['All'],
                         multi=True)], width={"xs": 6, "sm": 4, "md": 2}),
         dbc.Col([
             html.Label("Facility", style={'color': 'white'}),
-            dcc.Dropdown(id='facility-filter',
+            dcc.Dropdown(id='facility-filter3',
                         options=[{'label': i, 'value': i} for i in (['All'] + list(merged_df['facility_name'].unique()))],
                         value=['All'],
                         multi=True)], width={"xs": 6, "sm": 4, "md": 2}),
         dbc.Col([
             html.Label("Sex", style={'color': 'white'}),
-            dcc.Dropdown(id='sex-filter',
+            dcc.Dropdown(id='sex-filter3',
                         options=[{'label': i, 'value': i} for i in (['All'] + list(merged_df['sex'].unique()))],
                         value=['All'],
                         multi=True)], width={"xs": 6, "sm": 4, "md": 2}),
         dbc.Col([
             html.Label("Age Group", style={'color': 'white'}),
-            dcc.Dropdown(id='age-group-filter',
+            dcc.Dropdown(id='age-group-filter3',
                         options=[{'label': i,'value': i} for i in (['All'] + ["<1", "1-4", "5-9", "10-14", "15-19", "20-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65+"])],
                         value=['All'],
                         multi=True)], width={"xs": 6, "sm": 4, "md": 2}),

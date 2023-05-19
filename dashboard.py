@@ -141,6 +141,32 @@ def init_dash(app):
         #     return page5.layout
     
     @app.callback(
+        Output('lga-filter', 'options'),
+        Input('state-filter', 'value')
+    )
+    def update_lga_options(selected_state):
+        if 'All' in selected_state or not selected_state:
+            options = [{'label': i, 'value': i} for i in (['All'] + list(merged_df['lga'].unique()))]
+        else:
+            options = [{'label': i, 'value': i} for i in (['All'] + list(merged_df[merged_df['state'].isin(selected_state)]['lga'].unique()))]
+        return options
+
+    @app.callback(
+        Output('facility-filter', 'options'),
+        Input('state-filter', 'value'),
+        Input('lga-filter', 'value')
+    )
+    def update_facility_options(selected_state, selected_lga):
+        filtered_df = merged_df
+        if 'All' not in selected_state and selected_state:
+            filtered_df = filtered_df[filtered_df['state'].isin(selected_state)]
+        if 'All' not in selected_lga and selected_lga:
+            filtered_df = filtered_df[filtered_df['lga'].isin(selected_lga)]
+        options = [{'label': i, 'value': i} for i in (['All'] + list(filtered_df['facility_name'].unique()))]
+        return options
+
+
+    @app.callback(
         Output('lga-filter1', 'options'),
         Input('state-filter1', 'value')
     )
@@ -166,10 +192,10 @@ def init_dash(app):
         return options
     
     @app.callback(
-        Output('lga-filter', 'options'),
-        Input('state-filter', 'value')
+        Output('lga-filter2', 'options'),
+        Input('state-filter2', 'value')
     )
-    def update_lga_options(selected_state):
+    def update_lga_options1(selected_state):
         if 'All' in selected_state or not selected_state:
             options = [{'label': i, 'value': i} for i in (['All'] + list(merged_df['lga'].unique()))]
         else:
@@ -177,11 +203,11 @@ def init_dash(app):
         return options
 
     @app.callback(
-        Output('facility-filter', 'options'),
-        Input('state-filter', 'value'),
-        Input('lga-filter', 'value')
+        Output('facility-filter2', 'options'),
+        Input('state-filter2', 'value'),
+        Input('lga-filter2', 'value')
     )
-    def update_facility_options(selected_state, selected_lga):
+    def update_facility_options1(selected_state, selected_lga):
         filtered_df = merged_df
         if 'All' not in selected_state and selected_state:
             filtered_df = filtered_df[filtered_df['state'].isin(selected_state)]
@@ -189,6 +215,32 @@ def init_dash(app):
             filtered_df = filtered_df[filtered_df['lga'].isin(selected_lga)]
         options = [{'label': i, 'value': i} for i in (['All'] + list(filtered_df['facility_name'].unique()))]
         return options
+    
+    @app.callback(
+        Output('lga-filter3', 'options'),
+        Input('state-filter3', 'value')
+    )
+    def update_lga_options1(selected_state):
+        if 'All' in selected_state or not selected_state:
+            options = [{'label': i, 'value': i} for i in (['All'] + list(merged_df['lga'].unique()))]
+        else:
+            options = [{'label': i, 'value': i} for i in (['All'] + list(merged_df[merged_df['state'].isin(selected_state)]['lga'].unique()))]
+        return options
+
+    @app.callback(
+        Output('facility-filter3', 'options'),
+        Input('state-filter3', 'value'),
+        Input('lga-filter3', 'value')
+    )
+    def update_facility_options1(selected_state, selected_lga):
+        filtered_df = merged_df
+        if 'All' not in selected_state and selected_state:
+            filtered_df = filtered_df[filtered_df['state'].isin(selected_state)]
+        if 'All' not in selected_lga and selected_lga:
+            filtered_df = filtered_df[filtered_df['lga'].isin(selected_lga)]
+        options = [{'label': i, 'value': i} for i in (['All'] + list(filtered_df['facility_name'].unique()))]
+        return options
+
 
     #Treatment Current Analytics
     @app.callback(
@@ -316,11 +368,11 @@ def init_dash(app):
         Output('prog4', 'figure'),
         Output('prog5', 'figure'),
         ],
-        [Input('state-filter', 'value'),
-        Input('lga-filter', 'value'),
-        Input('facility-filter', 'value'),
-        Input('sex-filter', 'value'),
-        Input('age-group-filter', 'value'),
+        [Input('state-filter3', 'value'),
+        Input('lga-filter3', 'value'),
+        Input('facility-filter3', 'value'),
+        Input('sex-filter3', 'value'),
+        Input('age-group-filter3', 'value'),
         ],
     )
     def update_charts(state_filter3, lga_filter3, facility_filter3, sex_filter3, age_group_filter3):
