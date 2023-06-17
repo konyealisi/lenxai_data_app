@@ -62,7 +62,6 @@ def validate_email(form, field):
     if user:
         raise ValidationError('Email is already taken.')
     
-
 def entry_exists(client_id, facility_name):
     existing_entry = DataEntry.query.filter_by(client_id=client_id, facility_name=facility_name).first()
     return existing_entry is not None
@@ -125,7 +124,6 @@ def get_facility_names():
     facility_names = [facility.facility_name for facility in facilities]
     return facility_names
 
-
 def age_group(age):
     if age < 1:
         return "<1"
@@ -158,7 +156,6 @@ def age_group(age):
     else:
         return "65+"
 
-
 def txcurr_vf(merged_df):
     # Filter the merged_df DataFrame, keeping only the rows where the curr_ll value is 'yes' and curr_pr value is either 'yes' or 'no'
     filtered_merged_df = merged_df[(merged_df['curr_ll'] == 'yes') & (merged_df['curr_pr'].isin(['yes', 'no']))]
@@ -184,7 +181,6 @@ def txcurr_vf(merged_df):
     print(grouped_counts)
 
     return(grouped_counts)
-
 
 def bar_chart_age_sex(filtered_df):
     yes_grouped = filtered_df[filtered_df['curr_pr'] == 'yes'].groupby(['age_group', 'sex']).size().reset_index(name='curr_pr')
@@ -226,7 +222,6 @@ def bar_chart_age_sex(filtered_df):
 
     return fig
 
-
 def bar_chart_age_sex1(filtered_df):
     yes_grouped = filtered_df[filtered_df['curr_ll'] == 'yes'].groupby(['age_group', 'sex']).size().reset_index(name='curr_ll')
 
@@ -267,8 +262,6 @@ def bar_chart_age_sex1(filtered_df):
     )
 
     return fig
-
-import plotly.graph_objects as go
 
 def vf_plot_funder(grouped_counts):
     # Create a bar chart with Plotly
@@ -318,7 +311,8 @@ def vf_plot_funder(grouped_counts):
         title=f'Verification Factor by {a.capitalize()}',
         xaxis_title= f'{a.capitalize()}',
         yaxis_title='Counts',
-        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
+        yaxis=dict(range=[0, grouped_sums['txcurr_ndr'].max()+1]),
+        yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),#, range=[0, 1.05]),
         barmode='group',
         showlegend=True,
         height=500,
@@ -326,11 +320,8 @@ def vf_plot_funder(grouped_counts):
         margin=dict(l=50, r=50, b=50, t=50),
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
-
-   
+ 
     return fig
-
-
 
 def create_table(df):
     
@@ -431,6 +422,7 @@ def vf_plot_ip(grouped_counts):
         title='Verification Factor by Implementing Partner',
         xaxis_title= 'Implementing Partner',
         yaxis_title='Counts',
+        yaxis=dict(range=[0, grouped_sums['txcurr_ndr'].max()+1]),
         yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
@@ -491,6 +483,7 @@ def vf_plot_fo(grouped_counts):
         title=f'Verification Factor by Facility Ownership',
         xaxis_title= 'Facility Ownership',
         yaxis_title='Counts',
+        yaxis=dict(range=[0, grouped_sums['txcurr_ndr'].max()+1]),
         yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
@@ -551,6 +544,7 @@ def vf_plot_ft(grouped_counts):
         title='Verification Factor by Facility Type',
         xaxis_title= 'Facility Type',
         yaxis_title='Counts',
+        yaxis=dict(range=[0, grouped_sums['txcurr_ndr'].max()+1]),
         yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
@@ -563,8 +557,11 @@ def vf_plot_ft(grouped_counts):
    
     return fig
 
-
 def bubble_chart(df):
+    # Calculate the height dynamically
+    height = len(df['facility_name'].unique()) * 15  # Adjust the multiplying factor as per your requirements
+    height = max(height, 400)  # Set a minimum height
+
     fig = px.scatter(df, x="txcurr_vf", y="txcurr_ndr", color="txcurr_vf", size="txcurr_pr",
                      hover_name="facility_name", text="state",
                      hover_data=["lga", "facility_type", "facility_ownership", "funder"],
@@ -574,9 +571,10 @@ def bubble_chart(df):
                       xaxis_title="Verification Factor",
                       yaxis_title="TXCURR_NDR",
                       coloraxis_colorbar=dict(title="Verification Factor"),
-                      height=600)
+                      height=height,  # use the calculated height here
+                      xaxis=dict(tickformat=".2%", range=[0, 1.1]),  # set x-axis range from 0% to 100%
+                      yaxis=dict(range=[0, df['txcurr_ndr'].max()+2]))  # set y-axis range from 0 to the maximum value in 'txcurr_ndr'
     
-    fig.update_xaxes(tickformat=".2%")
     fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
     return fig
 
@@ -649,9 +647,13 @@ def bubble_chart_age_sex(filtered_df):
     
     return fig
 
-
 def bar_chart_facility(df):
     df_sorted = df.sort_values('txcurr_vf')
+
+    # Calculate the height dynamically, e.g. 50 pixels per bar
+    height = len(df_sorted['facility_name'].unique()) * 50
+    height = max(height, 300)  # Set a minimum height
+
     fig = px.bar(df_sorted, x='txcurr_vf', y='facility_name', #color='txcurr_vf',
                  orientation='h', hover_name="facility_name", text=df_sorted['txcurr_pr']/df_sorted['txcurr_ndr']*100,
                  hover_data=['state', 'lga', 'facility_type', 'facility_ownership', 'funder'],
@@ -661,7 +663,7 @@ def bar_chart_facility(df):
                       xaxis_title='Verification Factor (%)',
                       yaxis_title='Facility',
                       coloraxis_colorbar=dict(title='Verification Factor (%)'),
-                      height=800,
+                      height=height,
                       font=dict(size=14))
     fig.update_xaxes(tickformat=".2%")
     fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
@@ -689,7 +691,6 @@ def plot_txcurr_pr_vs_txcurr_ndr(df):
     )
 
     return fig
-
 
 def plot_txcurr_cr_vs_txcurr_ndr(df):
     # Count the occurrences of 'yes' for curr_pr and curr_ll
@@ -766,7 +767,6 @@ def plot_weekly_curr_pr(df, start, stop):
 
     return fig
 
-
 def plot_weekly_curr_cr(df, start, stop):
     df['entry_datetime_cr'] = pd.to_datetime(df['entry_datetime_cr'])
     
@@ -834,8 +834,6 @@ def plot_progress_pr_towards_ll(df):
 
     return fig
 
-
-
 def plot_progress_cr_towards_ll(df):
     curr_cr_yes_count = df[df['curr_cr'].isin(['yes', 'no'])].shape[0]
     curr_ll_yes_count = df[df['curr_ll'] == 'yes'].shape[0]
@@ -873,7 +871,6 @@ def plot_progress_cr_towards_ll(df):
                       legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10)))
 
     return fig
-
 
 def plot_daily_curr_pr(df, start, stop):
     df['entry_datetime_pr'] = pd.to_datetime(df['entry_datetime_pr'])

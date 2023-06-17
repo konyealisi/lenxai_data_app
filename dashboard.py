@@ -10,6 +10,7 @@ import os
 import pandas as pd
 import numpy as np
 from datetime import date as d
+from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objs as go
 from sqlalchemy import create_engine, text
@@ -66,6 +67,11 @@ merged_df['age_group'] = merged_df['age'].apply(age_group)
 merged_df['curr_ll'] = merged_df['curr_ll'].str.lower().str.strip()
 merged_df['curr_cr'] = merged_df['curr_cr'].str.lower().str.strip()
 merged_df['curr_pr'] = merged_df['curr_pr'].str.lower().str.strip()
+
+# print('merged_df DataFrame:')
+# not_null_df = merged_df[merged_df['entry_datetime_pr'].notnull()]
+# print(not_null_df)
+# print(merged_df)
 
 vf_df = merged_df[(merged_df['curr_ll'] == 'yes') & (merged_df['curr_pr'].isin(['yes', 'no']))]
 df =vf_df.copy()
@@ -357,7 +363,12 @@ def init_dash(app):
         return plot_txcurr_pr_vs_txcurr_ndr(filtered_df), plot_txcurr_cr_vs_txcurr_ndr(filtered_df), plot_txcurr_pr_vs_txcurr_cr(filtered_df)
 
     start ='2023-05-01'
-    stop =f'{d.today().year}-{d.today().month}-{d.today().day+7}'#
+    # Get today's date
+    today = datetime.today()
+
+    tempdate = today + timedelta(days=7)
+
+    stop =f'{tempdate.year}-{tempdate.month}-{tempdate.day}'#
     # stop = '2023-05-15'
     #Progress Analytics
     @app.callback(

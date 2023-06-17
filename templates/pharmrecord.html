@@ -52,7 +52,7 @@
         <div class="d-flex justify-content-center">
             <h1 class="mb-3">Enter Pharmarcy Record</h1>
         </div>
-        <form method="POST">
+        <form id="pharmRecordForm" method="POST">
             {{ form.hidden_tag() }}
             <div>
                 <div style="display: inline-block;">
@@ -73,6 +73,10 @@
                 </div>
             </div>
             <div class="form-group">
+                <label for="{{ form.pharm_doc.id }}">Pharmacy Record Sighted?</label>
+                {{ form.pharm_doc() }} <span id="pharm_doc" class="ml-5"><b>(Available Record: <span id="pharm_doc_value"> </b></span>)</span>
+            </div>
+            <div class="form-group">
                 <label for="{{ form.dregimen_pw.id }}">Drug Regimen Pharmacy Record</label>
                 {{ form.dregimen_pw(class="form-control") }} <span id="dregimen_pw" class="ml-5"><b>(Available Record: <span id="dregimen_pw_value"> </b></span>)</span>
             </div>
@@ -90,10 +94,6 @@
             <div class="form-group">
                 <label for="{{ form.quantityd_pw.id }}">Quantity of Drug Dispenced Pharmacy Record</label>
                 {{ form.quantityd_pw(class="form-control") }} <span id="quantityd_pw" class="ml-5"><b>(Available Record: <span id="quantityd_pw_value"> </b></span>)</span>
-            </div>
-            <div class="form-group">
-                <label for="{{ form.pharm_doc.id }}">Pharmacy Record Sighted?</label>
-                {{ form.pharm_doc() }} <span id="pharm_doc" class="ml-5"><b>(Available Record: <span id="pharm_doc_value"> </b></span>)</span>
             </div>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
@@ -164,6 +164,113 @@
         });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js"></script>
+    <script>
+        $(document).ready(function() {
+        // Check for saved data when the page loads
+        checkForSavedData();
+    });
+    
+    function saveDataLocally(clientId, data) {
+        localStorage.setItem('pharmRecordForm-' + clientId, JSON.stringify(data));
+    }
+    
+    function getLocalData(clientId) {
+        let data = localStorage.getItem('pharmRecordForm-' + clientId);
+        return data ? JSON.parse(data) : null;
+    }
+    
+    function clearLocalData(clientId) {
+        localStorage.removeItem('pharmRecordForm-' + clientId);
+    }
+    
+    function checkForSavedData() {
+        // Get the keys from the localStorage
+        var keys = Object.keys(localStorage);
+        keys.forEach(function(key) {
+            if (key.startsWith("pharmRecordForm-")) {
+                // Get the data for this key
+                var data = JSON.parse(localStorage.getItem(key));
+                uploadData(data, function(success) {
+                    if (success) {
+                        alert("Data uploaded successfully!");
+                        clearLocalData(key.split('-')[1]);
+                    } else {
+                        alert("Data upload failed. Please try again later.");
+                    }
+                });
+            }
+        });
+    }
+    
+    function uploadData(data, callback) {
+        for (let key in data) {
+            let input = $(`#pharmRecordForm [name="${key}"]`);
+            if (input && input.length) {
+                input.val(data[key]);
+            }
+        }
+    
+        $.ajax({
+            url: '/pharm_record',  // the endpoint where the form data should be submitted
+            method: 'POST',
+            data: $('#pharmRecordForm').serialize(),  // serialize the form data
+            success: function(response) {
+                console.log('Form submitted successfully');
+                callback(true);
+            },
+            error: function(error) {
+                console.log('Error submitting form', error);
+                callback(false);
+            }
+        });
+    }
+    
+    $('#pharmRecordForm').on('submit', function(e) {
+        e.preventDefault();
+    
+        // Collect data from the form
+        let data = {};
+        data['client_id'] = $('#client_id').val(); 
+    
+        let clientId = $('select[name="client_id"]').attr('data-id');
+        if (navigator.onLine) {
+            uploadData(data, function(success) {
+                if (success) {
+                    alert("Data uploaded successfully!");
+                    window.location.reload(); // Refresh the page
+                    clearLocalData(clientId); // Clearing data after successful upload
+                } else {
+                    alert("Data upload failed. Please try again later.");
+                }
+            });
+        } else {
+            saveDataLocally(clientId, data);
+            alert("You're offline. The data has been saved locally and will be uploaded when you reconnect.");
+        }
+    });
+    
+    // Event listeners for online and offline status
+    window.addEventListener('online', checkForSavedData);
+    window.addEventListener('offline', function() {
+        alert("You're offline. Your data will be saved locally until you reconnect.");
+    });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $('input[name="pharm_doc"]').change(function() {
+                if ($(this).val().toLowerCase() === 'no') {
+                    // Disable other form fields
+                    $('.form-group').not(':first').find('input, select').prop('disabled', true);
+                } else {
+                    // Enable other form fields
+                    $('.form-group').find('input, select').prop('disabled', false);
+                }
+            });
+
+            // Trigger change event to disable fields based on initial selection
+            $('input[name="pharm_doc"]').trigger('change');
+        });
+    </script>
 </body>
 </html>
 
