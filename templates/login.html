@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container">
-    <div class="row justify-content-center align-items-center" style="height:100vh">
+    <div class="row justify-content-center align-items-center" style="height:88vh">
         <div class="col-md-6">
             <div class="card" style="background-color: #343a40;">
                 <div class="card-body">
@@ -26,6 +26,7 @@
                             <label for="{{ login_form.password.id }}" style="color: white;">Password</label>
                             {{ login_form.password(class="form-control", placeholder="Password") }}
                         </div>
+                        <div class="spacing-div"></div>
                         <button type="submit" class="btn btn-primary btn-block">Login</button>
                     </form>
                 </div>

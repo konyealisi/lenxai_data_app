@@ -5,13 +5,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" >
     <div class="spacing-div"></div>
     <div class="d-flex justify-content-center">
-        <h2 class="mb-4">New User</h2>
+        <h3 class="mb-4">New User</h3>
     </div>
     <div class="d-flex justify-content-center">
-        <form method="POST" action="">
+        <form method="POST" action="" style="height:80vh">
             {{ register_form.hidden_tag() }}
             <fieldset class="form-group">
                 <div class="form-group">
@@ -62,9 +62,21 @@
             <div class="form-group">
                 {{ register_form.submit(class="btn btn-outline-info") }}
             </div>
+            <div class="spacing-div"></div>
+            <div class="d-flex justify-content-center">
+                <div class="border-top pt-3">
+                    <small class="text-muted">
+                        Already Have An Account? <a class="ml-2" href="{{ url_for('login') }}">Sign In</a>
+                    </small>
+                </div>
+            </div>
+            <div class="spacing-div"></div>
+            <div class="d-flex justify-content-end">
+                <a href="/landing" class="btn btn-secondary">Back to Main</a>
+            </div>
         </form>
     </div>
-    <div class="spacing-div"></div>
+    <!-- <div class="spacing-div"></div>
     <div class="d-flex justify-content-center">
         <div class="border-top pt-3">
             <small class="text-muted">
@@ -75,7 +87,7 @@
     <div class="spacing-div"></div>
     <div class="d-flex justify-content-end">
         <a href="/landing" class="btn btn-secondary">Back to Main</a>
-    </div>
+    </div> -->
 </div>
 {% endblock %}
 {% block scripts %}

@@ -35,8 +35,8 @@ from flask.cli import AppGroup
 from itsdangerous import URLSafeTimedSerializer
 from flask_mail import Message, Mail
 
-from dashboard import init_dash
-
+# from dashboard import init_dash
+from appdashboard import init_dash as appdash
 
 
 app = Flask(__name__)
@@ -164,7 +164,8 @@ def requires_roles_and_data_permission(*roles):
 @app.route('/')
 @app.route('/index')
 def index():
-    return redirect(url_for('landing')) #render_template('index.html', title='Home')
+    # return redirect(url_for('landing')) #render_template('index.html', title='Home')
+    return render_template('index.html', title='Home')
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -186,7 +187,7 @@ def get_facility_choices():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('landing'))
+        return redirect(url_for('index'))
     login_form = LoginForm()
     if login_form.validate_on_submit():
         user = User.query.filter_by(email=login_form.email.data).first()
@@ -202,7 +203,7 @@ def login():
             login_user(user)
             flash('You have successfully logged in.', 'success')
             next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('landing'))
+            return redirect(next_page) if next_page else redirect(url_for('index'))
         else:
             flash('Login unsuccessful.  Please check your email and password.', 'danger')
     return render_template('login.html', title='Login', login_form=login_form)#, register_form=register_form)
@@ -1109,7 +1110,8 @@ def inject_current_year():
 #     process.terminate()
 #     return redirect("http://localhost:8501")
 
-dash_app = init_dash(app)
+# dash_app = init_dash(app)
+dash_app = appdash(app)
 
 @app.route('/dashboard')
 @login_required

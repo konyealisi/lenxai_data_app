@@ -6,17 +6,16 @@
 {% endblock %}
 
 {% block content %}
-    <div class="container" style="height:100vh">
-        <div class="spacing-div"></div>
-        <div class="d-flex justify-content-between align-items-center">
-            <h3 class="mb-3">Welcome, {{ current_user.username }}!</h3>
-        </div>
-        <div class="spacing-div"></div>
-        <div class="spacing-div"></div>
-        <div class="spacing-div"></div>
-        <div class="spacing-div"></div>
+
+<div class="container">
+    <div class="spacing-div"></div>
+    <!-- <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-3">Welcome, {{ current_user.username }}!</h5>
+    </div> -->
+    <div class="spacing-div"></div>
+    <form  style="height:79vh">
         <div class="d-flex justify-content-center">
-            <h1 class="mb-3">Please Enter Assessment Data</h1>
+            <h4 class="mb-4">Please Enter Assessment Data:</h4>
         </div>
         <div class="spacing-div"></div>
         <div class="d-flex justify-content-center">
@@ -26,10 +25,11 @@
         <div class="d-flex justify-content-center">
             <a href="/pharm_record" class="btn btn-primary mb-3">Enter Pharmacy Record</a>
         </div>
-        <div class="spacing-div"></div>
-        <div class="d-flex justify-content-end">
-            <a href="/landing" class="btn btn-secondary">Back to Main</a>
-        </div>
-        <div class="spacing-div"></div>
+    </form>
+    
+    <div class="d-flex justify-content-center">
+        <a href="/landing" class="btn btn-secondary">Back to Main</a>
     </div>
+    <div class="spacing-div"></div>
+</div>
 {% endblock %}

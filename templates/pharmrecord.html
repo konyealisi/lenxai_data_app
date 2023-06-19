@@ -34,14 +34,14 @@
         flex: 1;
         }
 
-        .footer {
+        /* .footer {
         text-align: center;
         padding: 10px;
         background-color: #333;
         color: white;
         position: absolute;
         width: 100%;
-        }
+        } */
     </style>
 </head>
 <body>
@@ -50,9 +50,9 @@
     
     <div class="container">
         <div class="d-flex justify-content-center">
-            <h1 class="mb-3">Enter Pharmarcy Record</h1>
+            <h2 class="mb-3">Enter Pharmarcy Record</h2>
         </div>
-        <form id="pharmRecordForm" method="POST">
+        <form id="pharmRecordForm" method="POST"  style="height:80vh">
             {{ form.hidden_tag() }}
             <div>
                 <div style="display: inline-block;">
@@ -76,6 +76,7 @@
                 <label for="{{ form.pharm_doc.id }}">Pharmacy Record Sighted?</label>
                 {{ form.pharm_doc() }} <span id="pharm_doc" class="ml-5"><b>(Available Record: <span id="pharm_doc_value"> </b></span>)</span>
             </div>
+            <div class="spacing-div"></div>
             <div class="form-group">
                 <label for="{{ form.dregimen_pw.id }}">Drug Regimen Pharmacy Record</label>
                 {{ form.dregimen_pw(class="form-control") }} <span id="dregimen_pw" class="ml-5"><b>(Available Record: <span id="dregimen_pw_value"> </b></span>)</span>
@@ -95,14 +96,23 @@
                 <label for="{{ form.quantityd_pw.id }}">Quantity of Drug Dispenced Pharmacy Record</label>
                 {{ form.quantityd_pw(class="form-control") }} <span id="quantityd_pw" class="ml-5"><b>(Available Record: <span id="quantityd_pw_value"> </b></span>)</span>
             </div>
+            <div class="spacing-div"></div>
             <button type="submit" class="btn btn-primary">Submit</button>
+            <div class="spacing-div"></div>
+            <div class="d-flex justify-content-end">
+                <a href="/client_record" class="btn btn-secondary">Next to Client Record</a>
+            </div>
+            <div class="d-flex justify-content-near">
+                <a href="/data_entry" class="btn btn-secondary">Back to Data Entry</a>
+            </div>
         </form>
-        <div class="d-flex justify-content-end">
+        <div class="spacing-div"></div>
+        <!-- <div class="d-flex justify-content-end">
             <a href="/client_record" class="btn btn-secondary">Next to Client Record</a>
         </div>
         <div class="d-flex justify-content-near">
             <a href="/data_entry" class="btn btn-secondary">Back to Data Entry</a>
-        </div>
+        </div> -->
     </div>
     <div class="footer">
         <p>&copy; {{ current_year }} LenxAI. All rights reserved.</p>

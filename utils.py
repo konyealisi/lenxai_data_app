@@ -7,6 +7,9 @@ import plotly.graph_objs as go
 from dash import dash_table
 import seaborn as sns
 from plotly.subplots import make_subplots
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+import json
 
 import pandas as pd, numpy as np
 
@@ -370,7 +373,7 @@ def map_figure(df):
     fig.update_layout(mapbox_style="carto-positron", mapbox_zoom=5,
                       margin={"r": 0, "t": 0, "l": 0, "b": 0},
                       coloraxis_colorbar=dict(title="Verification Factor"),
-                      height=600)
+                      height=500)
     fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
     return fig
 
@@ -647,12 +650,37 @@ def bubble_chart_age_sex(filtered_df):
     
     return fig
 
+# def bar_chart_facility(df):
+#     df_sorted = df.sort_values('txcurr_vf')
+
+#     # Calculate the height dynamically, e.g. 50 pixels per bar
+#     height = len(df_sorted['facility_name'].unique()) * 50
+#     height = max(height, 400)  # Set a minimum height
+
+#     fig = px.bar(df_sorted, x='txcurr_vf', y='facility_name', #color='txcurr_vf',
+#                  orientation='h', hover_name="facility_name", text=df_sorted['txcurr_pr']/df_sorted['txcurr_ndr']*100,
+#                  hover_data=['state', 'lga', 'facility_type', 'facility_ownership', 'funder'],
+#                  color_continuous_scale=px.colors.diverging.RdYlGn[::], color_continuous_midpoint=0.5)
+#     fig.update_traces(textposition='outside', texttemplate='%{text:.2f}%')
+#     fig.update_layout(title='Verification Factor by Facility',
+#                       xaxis_title='Verification Factor (%)',
+#                       yaxis_title='Facility',
+#                       coloraxis_colorbar=dict(title='Verification Factor (%)'),
+#                       height=height,
+#                       font=dict(size=12))
+#     fig.update_xaxes(tickformat=".2%")
+#     fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
+#     return fig
+
+import textwrap
+
 def bar_chart_facility(df):
     df_sorted = df.sort_values('txcurr_vf')
+    df_sorted['facility_name'] = ['<br>'.join(textwrap.wrap(x, width=15)) for x in df_sorted['facility_name']]
 
     # Calculate the height dynamically, e.g. 50 pixels per bar
     height = len(df_sorted['facility_name'].unique()) * 50
-    height = max(height, 300)  # Set a minimum height
+    height = max(height, 400)  # Set a minimum height
 
     fig = px.bar(df_sorted, x='txcurr_vf', y='facility_name', #color='txcurr_vf',
                  orientation='h', hover_name="facility_name", text=df_sorted['txcurr_pr']/df_sorted['txcurr_ndr']*100,
@@ -664,10 +692,11 @@ def bar_chart_facility(df):
                       yaxis_title='Facility',
                       coloraxis_colorbar=dict(title='Verification Factor (%)'),
                       height=height,
-                      font=dict(size=14))
+                      font=dict(size=12))
     fig.update_xaxes(tickformat=".2%")
     fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
     return fig
+
 
 def plot_txcurr_pr_vs_txcurr_ndr(df):
     # Count the occurrences of 'yes' for curr_pr and curr_ll
@@ -993,3 +1022,105 @@ def hplot_daily_curr_pr(df):
     )
 
     return fig
+
+def database_data():
+    # Load database connection details from JSON file
+    secrets_file = 'C:/Users/konye/Documents/mydoc.json'
+    try:
+        with open(secrets_file) as f:
+            secrets = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: {secrets_file} not found.")
+        exit(1)
+
+    db_user = secrets.get('db_user', None)
+    db_password = secrets.get('db_password', None)
+    db_host = secrets.get('db_host', None)
+    db_name = secrets.get('db_name', None)
+
+    # Check if any of the required values are missing
+    if None in (db_user, db_password, db_host, db_name):
+        print("Error: Missing database configuration values in the JSON file.")
+        exit(1)
+
+    # Connect to the database
+    db_url = f"postgresql://{db_user}:{db_password}@{db_host}/{db_name}"
+    engine = create_engine(db_url)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    # Load DataEntry data
+    data_entry_query = text("SELECT * FROM data_entry")
+    data_entry_result = session.execute(data_entry_query)
+    data_entry_df = pd.DataFrame(data_entry_result.fetchall(), columns=data_entry_result.keys())
+
+    # Load Facility data
+    facility_query = text("SELECT * FROM facility")
+    facility_result = session.execute(facility_query)
+    facility_df = pd.DataFrame(facility_result.fetchall(), columns=facility_result.keys())
+
+    # Merge the facility table with the data_entry table on facility_name
+    merged_df = data_entry_df.merge(facility_df, on='facility_name', how='left')
+    merged_df['age_group'] = merged_df['age'].apply(age_group)
+    merged_df['curr_ll'] = merged_df['curr_ll'].str.lower().str.strip()
+    merged_df['curr_cr'] = merged_df['curr_cr'].str.lower().str.strip()
+    merged_df['curr_pr'] = merged_df['curr_pr'].str.lower().str.strip()
+
+    vf_df = merged_df[(merged_df['curr_ll'] == 'yes') & (merged_df['curr_pr'].isin(['yes', 'no']))]
+    df = vf_df.copy()
+    df['txcurr_ndr'] = (df['curr_ll'] == 'yes').astype(int)
+    df['txcurr_cr'] = (df['curr_cr'] == 'yes').astype(int)
+    df['txcurr_pr'] = (df['curr_pr'] == 'yes').astype(int)
+    df['txcurr_vf'] = (df['curr_pr'] == 'yes').astype(int)
+    print('vf_df DataFrame:')
+    print(df)
+    df['latitude'] = df['latitude'].fillna(0)
+    df['longitude'] = df['longitude'].fillna(0)
+    grouped_df = df.groupby(['state', 'lga', 'facility_name', 'facility_type', 'facility_ownership', 'implementing_partner', 'funder', 'latitude', 'longitude'])
+    grouped_counts = grouped_df.agg(
+        txcurr_ndr=('txcurr_ndr', 'count'),
+        txcurr_cr=('txcurr_cr', 'sum'),
+        txcurr_pr=('txcurr_pr', 'sum'),#lambda x: (x == 'yes').sum()),
+        txcurr_vf=('txcurr_vf', 'mean')
+    ).reset_index()
+    # print('grouped_counts DataFrame:')
+    # print(grouped_counts)
+    df1 = pd.DataFrame(grouped_counts)
+    return merged_df, df1
+
+def txcurr_ndr_card(df):
+    df = df[(df['curr_ll'] == 'yes') & (df['curr_pr'].isin(['yes', 'no']))]
+    df['txcurr_ndr'] = (df['curr_ll'] == 'yes').astype(int)
+    # df['txcurr_cr'] = (df['curr_cr'] == 'yes').astype(int)
+    # df['txcurr_pr'] = (df['curr_pr'] == 'yes').astype(int)
+    content = df['txcurr_ndr'].sum()
+    return content
+
+def txcurr_cr_card(df):
+    df = df[(df['curr_ll'] == 'yes') & (df['curr_pr'].isin(['yes', 'no']))]
+    # df['txcurr_ndr'] = (df['curr_ll'] == 'yes').astype(int)
+    df['txcurr_cr'] = (df['curr_cr'] == 'yes').astype(int)
+    # df['txcurr_pr'] = (df['curr_pr'] == 'yes').astype(int)
+    content = df['txcurr_cr'].sum()
+    return content
+
+def txcurr_pr_card(df):
+    df = df[(df['curr_ll'] == 'yes') & (df['curr_pr'].isin(['yes', 'no']))]
+    # df['txcurr_ndr'] = (df['curr_ll'] == 'yes').astype(int)
+    # df['txcurr_cr'] = (df['curr_cr'] == 'yes').astype(int)
+    df['txcurr_pr'] = (df['curr_pr'] == 'yes').astype(int)
+    content = df['txcurr_pr'].sum()
+    return content
+
+def txcurr_vf_card(df):
+    ndf = df[(df['curr_ll'] == 'yes') & (df['curr_pr'].isin(['yes', 'no']))].copy()
+    ndf['txcurr_ndr'] = (ndf['curr_ll'] == 'yes').astype(int)
+    # df['txcurr_cr'] = (df['curr_cr'] == 'yes').astype(int)
+    ndf['txcurr_pr'] = (ndf['curr_pr'] == 'yes').astype(int)
+    ndf['txcurr_vf'] = ndf['txcurr_pr'].sum()/ndf['txcurr_ndr'].sum()
+    content = ndf['txcurr_vf'].mean()
+    return content
+
+# def txcurr_ndr_card(df):
+#     content = df['txcurr_ndr'].sum()
+#     return content

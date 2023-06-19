@@ -1,0 +1,191 @@
+
+
+body {
+    background-color: #192444;
+    margin: 5%;
+  }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 15rem;
+    padding: 2rem 1rem;
+    /* background-color: #f8f9fa; */
+    z-index: 1050;
+    transition: width 0.3s ease-in-out;
+    background-color: #35384b;
+  }
+
+  /* when the user hovers on the sidebar, expand it */
+  .sidebar:hover {
+    width: 26rem;
+  }
+
+  /* make sure the contents of the navlink don't wrap when navbar collapses */
+  .sidebar .nav-link {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  /* fix the width of the icons */
+  .sidebar .nav-link i {
+    width: 1rem;
+  }
+
+  /* hide the navlink labels by default */
+  .sidebar .nav-link span {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.1s ease-in-out;
+  }
+
+  /* when the sidebar is hovered, reveal the labels */
+  .sidebar:hover .nav-link span {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* container for the sidebar header. make sure the contents don't wrap when
+   * the sidebar is collapsed.
+   */
+  .sidebar-header {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .image_title {
+    display: flex;
+    flex-direction: row;
+    column-gap: 5px;
+    align-items: center;
+  }
+
+  .icon_title {
+    display: flex;
+    flex-direction: row;
+    column-gap: 10px;
+    align-items: center;
+  }
+
+  .card_container {
+    border-radius: 5px;
+    background-color: #1f2c56;
+    margin: 25px;
+    padding: 15px;
+    position: relative;
+    box-shadow: 2px 2px 2px #1f2c56;
+  }
+  
+  .create_container {
+    border-radius: 5px;
+    background-color: #1f2c56;
+    margin: 18px;
+    padding: 15px;
+    position: relative;
+    box-shadow: 2px 2px 2px #1f2c56;
+  }
+  
+  .create_container1 {
+    border-radius: 5px;
+    background-color: #1f2c56;
+    margin: 10px;
+    padding: 15px;
+    position: relative;
+    box-shadow: 2px 2px 2px #1f2c56;
+  }
+  
+  .dcc_compon {
+    margin: 0;
+    padding: 5px;
+    width: calc(100%-40px);
+  }
+  
+  .fix_label {
+  font-size: 20px;
+    margin: 0;
+    padding: 10px;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+    width: calc(100%-40px);
+  }
+  
+  .flex-display {
+    display: flex;
+  }
+  
+  .container-display {
+    display: flex;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .refresh-data {
+    text-align: center;
+    height: 100%;
+    padding: 0 20px;
+    text-transform: none;
+    font-size: 20px;
+    float: right;
+    margin-right: 10px;
+    margin-top: 30px;
+  }
+  
+  .title {
+    text-align: center;
+  }
+  
+  .title1 {
+    text-align: center;
+  }
+  
+  .mainContainer {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 16rem);
+    margin-left: auto;
+  }
+  
+  .Select-control, .Select-menu-outer, .Select-multi-value-wrapper, .select-up, .is-open .Select-control {
+    background-color: #1f2c56;
+    color: white;
+  
+  }
+  
+  .Select-control{
+    border: 0.5px solid green;
+  }
+  
+  .has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label {
+    color: white;
+  }
+  
+  /* width */
+  ::-webkit-scrollbar {
+    width: 10px !important;
+    display: block !important;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    background: #1f2c56 !important;
+    border-radius: 10px !important;
+    display: block !important;
+  }
+  
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    background: #192444;
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: white !important;
+  }
