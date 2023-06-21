@@ -118,6 +118,12 @@
     .one-half.column {
       width: 48%;
     }
+    .one-fifth.column {
+      width: 20%;
+    }
+    .one-fourth.column {
+      width: 25%;
+    }
   
     /* Offsets */
     .offset-by-one.column,

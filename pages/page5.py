@@ -10,9 +10,9 @@ import json
 from utils import *
 
 merged_df, df1 = database_data()
-print('merged df')
+# print('merged df')
 
-print(merged_df)
+# print(merged_df)
 layout = html.Div([
             html.Div([
                 html.Div(

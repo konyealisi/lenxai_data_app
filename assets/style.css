@@ -149,7 +149,8 @@ body {
   .mainContainer {
     display: flex;
     flex-direction: column;
-    width: calc(100% - 16rem);
+    width: 90%;
+    /* calc(100% - 16rem); */
     margin-left: auto;
   }
   

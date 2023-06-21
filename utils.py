@@ -312,16 +312,24 @@ def vf_plot_funder(grouped_counts):
     # Customize the layout
     fig.update_layout(
         title=f'Verification Factor by {a.capitalize()}',
-        xaxis_title= f'{a.capitalize()}',
-        yaxis_title='Counts',
+        # xaxis_title= f'{a.capitalize()}',
+        # yaxis_title='Counts',
         yaxis=dict(range=[0, grouped_sums['txcurr_ndr'].max()+1]),
         yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),#, range=[0, 1.05]),
         barmode='group',
         showlegend=True,
-        height=500,
-        font=dict(color='black', size=14),
+        height=400,
+        font=dict(color='black', size=10),
         margin=dict(l=50, r=50, b=50, t=50),
-        legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
+        # legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=7))
+        legend=dict(
+            x=0.5,
+            y=-0.1,
+            xanchor='center',
+            yanchor='top',
+            orientation='h',
+            bgcolor='rgba(0,0,0,0)',
+            font=dict(color='black', size=10))
     )
  
     return fig
@@ -430,7 +438,7 @@ def vf_plot_ip(grouped_counts):
         barmode='group',
         showlegend=True,
         height=500,
-        font=dict(color='black', size=14),
+        font=dict(color='black', size=10),
         margin=dict(l=50, r=50, b=50, t=50),
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
@@ -476,7 +484,7 @@ def vf_plot_fo(grouped_counts):
                            xanchor='center',
                            yanchor='bottom',
                            showarrow=False,
-                           font=dict(color='black', size=12),
+                           font=dict(color='black', size=10),
                            xshift=0,
                            yshift=10,
                            yref='y2')
@@ -490,8 +498,8 @@ def vf_plot_fo(grouped_counts):
         yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
-        height=500,
-        font=dict(color='black', size=14),
+        height=400,
+        font=dict(color='black', size=10),
         margin=dict(l=50, r=50, b=50, t=50),
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
@@ -537,7 +545,7 @@ def vf_plot_ft(grouped_counts):
                            xanchor='center',
                            yanchor='bottom',
                            showarrow=False,
-                           font=dict(color='black', size=12),
+                           font=dict(color='black', size=10),
                            xshift=0,
                            yshift=10,
                            yref='y2')
@@ -551,8 +559,8 @@ def vf_plot_ft(grouped_counts):
         yaxis2=dict(title='Txcurr VF (%)', overlaying='y', side='right', tickformat='.2f%', showgrid=False),
         barmode='group',
         showlegend=True,
-        height=500,
-        font=dict(color='black', size=14),
+        height=400,
+        font=dict(color='black', size=10),
         margin=dict(l=50, r=50, b=50, t=50),
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
@@ -692,7 +700,7 @@ def bar_chart_facility(df):
                       yaxis_title='Facility',
                       coloraxis_colorbar=dict(title='Verification Factor (%)'),
                       height=height,
-                      font=dict(size=12))
+                      font=dict(size=10))
     fig.update_xaxes(tickformat=".2%")
     fig.update_coloraxes(colorbar=dict(tickformat=".2%"))
     return fig
@@ -715,7 +723,7 @@ def plot_txcurr_pr_vs_txcurr_ndr(df):
         xaxis_title="Treatment Curr",
         yaxis_title="Variable",
         height=300,
-        font=dict(color='black', size=14),
+        font=dict(color='black', size=10),
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
 
@@ -738,7 +746,7 @@ def plot_txcurr_cr_vs_txcurr_ndr(df):
         xaxis_title="Treatment Curr",
         yaxis_title="Variable",
         height=300,
-        font=dict(color='black', size=14),
+        font=dict(color='black', size=10),
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
 
@@ -761,7 +769,7 @@ def plot_txcurr_pr_vs_txcurr_cr(df):
         xaxis_title="Treatment Curr",
         yaxis_title="Variable",
         height=300,
-        font=dict(color='black', size=14),
+        font=dict(color='black', size=10),
         legend=dict(x=1.02, y=1, bordercolor='black', borderwidth=0.5, orientation='v', traceorder='normal', font=dict(size=10))
     )
 
@@ -1072,8 +1080,8 @@ def database_data():
     df['txcurr_cr'] = (df['curr_cr'] == 'yes').astype(int)
     df['txcurr_pr'] = (df['curr_pr'] == 'yes').astype(int)
     df['txcurr_vf'] = (df['curr_pr'] == 'yes').astype(int)
-    print('vf_df DataFrame:')
-    print(df)
+    # print('vf_df DataFrame:')
+    # print(df)
     df['latitude'] = df['latitude'].fillna(0)
     df['longitude'] = df['longitude'].fillna(0)
     grouped_df = df.groupby(['state', 'lga', 'facility_name', 'facility_type', 'facility_ownership', 'implementing_partner', 'funder', 'latitude', 'longitude'])
