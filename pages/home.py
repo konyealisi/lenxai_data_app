@@ -1,6 +1,6 @@
 import dash_bootstrap_components as dbc
 from dash import dcc, html
-from utils import age_group
+from utils import age_group, age_category
 import pandas as pd
 import os
 from sqlalchemy import create_engine, text
@@ -125,28 +125,30 @@ layout = html.Div([
 
     html.Div([
         html.Div([
-            dcc.Graph(id='vf_funder')],className="create_container three columns"),
+            dcc.Graph(id='vf_funder')], className="col-md-4"),
 
         html.Div([
-            dcc.Graph(id='vf_fo')],className="create_container three columns"),
+            dcc.Graph(id='vf_fo')], className="col-md-4"), 
 
         html.Div([
-            dcc.Graph(id="vf_ft")], className="create_container three columns"),
+            dcc.Graph(id="vf_ft")], className="col-md-4"),
     ], className="row flex-display"),
+    html.Br(),
 
     html.Div([
         html.Div([
-            dcc.Graph(id='vf_im')],className="create_container four columns"),
+            dcc.Graph(id='vf_im')], className="col-md-5"),
 
         html.Div([
-            dcc.Graph(id='vf_map')],className="create_container seven columns"),
+            dcc.Graph(id='vf_map')], className="col-md-7"),
     ], className="row flex-display"),
+    html.Br(),
 
     html.Div([
         html.Div([
-            dcc.Graph(id='vf_facility')],className="create_container four columns"),
+            dcc.Graph(id='vf_facility')], className="col-md-5"),
 
         html.Div([
-            dcc.Graph(id='vf_bubble')],className="create_container seven columns"),
+            dcc.Graph(id='vf_bubble')], className="col-md-7"),
     ], className="row flex-display"),
 ], id="mainContainer", style={"display": "flex", "flex-direction": "column"})

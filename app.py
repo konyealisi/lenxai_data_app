@@ -1116,7 +1116,7 @@ dash_app = appdash(app)
 @app.route('/dashboard')
 @login_required
 def render_dashboard():
-    return dash_app.index() 
+    return redirect('/dashboard/')#dash_app.index() 
 
 
 if __name__ == '__main__':

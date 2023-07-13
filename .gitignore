@@ -1,0 +1,36 @@
+# .gitignore
+
+# Ignore the Python virtual environment:
+lib/
+Scripts/
+uploads/
+.env
+
+# Ignore .pyc files (compiled Python bytecode)
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Flask session files
+instance/*
+
+# Ignore the SQLite database file / any other database files
+*.db
+*.sqlite
+
+# Ignore log files
+*.log
+
+# Ignore the migrations directory created by Flask-Migrate
+/migrations
+#/uploads
+
+# Ignore all __pycache__ directories
+__pycache__/
+
+.Python
+
+*.csv
+*.xlsx
+*.xml
+*.json

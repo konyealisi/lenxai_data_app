@@ -24,9 +24,16 @@ merged_df, df1 = database_data()
 font_awesome1 = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css'
 font_awesome3 = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/solid.min.css'
 
-def init_dash(app):
-    app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.themes.DARKLY, font_awesome1, font_awesome3], server=app, url_base_pathname='/dashboard/', title="DQA Analytics - LenxAI",  meta_tags=[{"name": "viewport", "content": "width=device-width"}])
-
+# def init_dash(app):
+#     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.themes.DARKLY, font_awesome1, font_awesome3], server=app, url_base_pathname='/dashboard/', title="DQA Analytics - LenxAI",  meta_tags=[{"name": "viewport", "content": "width=device-width"}])
+def init_dash(server):
+    dash_app = dash.Dash(
+        server=server,
+        routes_pathname_prefix='/dashboard/',
+        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.themes.DARKLY, font_awesome1, font_awesome3],
+        title="DQA Analytics - LenxAI",
+        meta_tags=[{"name": "viewport", "content": "width=device-width"}]
+    )
     
 
     sidebar =  html.Div(
@@ -43,35 +50,35 @@ def init_dash(app):
                     dbc.NavLink([html.Div([
                         html.I(className="fa-solid fa-house"),
                         html.Span("Home", style={'margin-top': '3px'})], className='icon_title')],
-                        href="/",
+                        href="/dashboard/pages/home",
                         active="exact",
                         className="pe-3"
                     ),
                     dbc.NavLink([html.Div([
                         html.I(className="fa-solid fa-gauge"),
                         html.Span("Verification Factor Analytics", style={'margin-top': '3px'})], className='icon_title')],
-                        href="/pages/page5",
+                        href="/dashboard/pages/page5",
                         active="exact",
                         className="pe-3"
                     ),
                     dbc.NavLink([html.Div([
                         html.I(className="fa-solid fa-gauge"),
                         html.Span("Treatment Current Analytics", style={'margin-top': '3px'})], className='icon_title')],
-                        href="/pages/page2",
+                        href="/dashboard/pages/page2",
                         active="exact",
                         className="pe-3"
                     ),
                     dbc.NavLink([html.Div([
                         html.I(className="fa fa-shield fa-rotate-270"),
                         html.Span("Progress", style={'margin-top': '3px'})], className='icon_title')],
-                        href="/pages/page3",
+                        href="/dashboard/pages/page3",
                         active="exact",
                         className="pe-3"
                     ),
                     dbc.NavLink([html.Div([
                         html.I(className="fa-solid fa-database"),
                         html.Span("Validation", style={'margin-top': '3px'})], className='icon_title')],
-                        href="/pages/page4",
+                        href="/dashboard/pages/page4",
                         active="exact",
                         className="pe-3"
                     ),
@@ -93,7 +100,7 @@ def init_dash(app):
 
     content = html.Div(id="page-content", children=[], className = 'mainContainer')
 
-    app.layout = html.Div([
+    dash_app.layout = html.Div([
         html.Div(
         html.H1("ART Data Quality Assessment Analytics Dashboard", className="header", style={'color': 'white'})
         ),
@@ -106,24 +113,24 @@ def init_dash(app):
 
 
 
-    @app.callback(Output('page-content', 'children'),
+    @dash_app.callback(Output('page-content', 'children'),
                 [Input('url', 'pathname')])
     def display_page(pathname):
-        if pathname == '/':
+        if pathname == '/dashboard/pages/home':
             return home.layout
-        elif pathname == '/pages/page1':
+        elif pathname == '/dashboard/pages/page1':
             return page1.layout
-        elif pathname == '/pages/page2':
+        elif pathname == '/dashboard/pages/page2':
             return page2.layout
-        elif pathname == '/pages/page3':
+        elif pathname == '/dashboard/pages/page3':
             return page3.layout
-        elif pathname == '/pages/page4':
+        elif pathname == '/dashboard/pages/page4':
             return page4.layout
-        elif pathname == '/pages/page5':
+        elif pathname == '/dashboard/pages/page5':
             return page5.layout
 
     
-    @app.callback(
+    @dash_app.callback(
         Output('lga-filter', 'options'),
         Input('state-filter', 'value')
     )
@@ -134,7 +141,7 @@ def init_dash(app):
             options = [{'label': i, 'value': i} for i in (['All'] + list(merged_df[merged_df['state'].isin(selected_state)]['lga'].unique()))]
         return options
 
-    @app.callback(
+    @dash_app.callback(
         Output('facility-filter', 'options'),
         Input('state-filter', 'value'),
         Input('lga-filter', 'value')
@@ -149,7 +156,7 @@ def init_dash(app):
         return options
 
     # Cards
-    @app.callback(
+    @dash_app.callback(
         Output('card1-content', 'children'),
         Output('card2-content', 'children'),
         Output('card3-content', 'children'),
@@ -190,7 +197,7 @@ def init_dash(app):
 
 
     # # Verification Factor Analytics
-    @app.callback(
+    @dash_app.callback(
         [Output('vf_funder', 'figure'),
         Output('vf_im', 'figure'),
         Output('vf_map', 'figure'),
@@ -207,7 +214,7 @@ def init_dash(app):
         ],
     )
     def update_charts1(state_filter, lga_filter, facility_filter, sex_filter, age_group_filter):
-        filtered_df = df1.copy()
+        filtered_df = merged_df.copy() #df1.copy()
         
         if 'All' not in state_filter:
             filtered_df = filtered_df[filtered_df['state'].isin(state_filter)]
@@ -227,6 +234,6 @@ def init_dash(app):
         return vf_plot_funder(filtered_df), vf_plot_ip(filtered_df), map_figure(filtered_df), bubble_chart(filtered_df), vf_plot_fo(filtered_df), vf_plot_ft(filtered_df), bar_chart_facility(filtered_df)
     
 
-    return app
+    return dash_app
 
     

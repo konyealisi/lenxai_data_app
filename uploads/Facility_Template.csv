@@ -1,8 +1,151 @@
-﻿Country,State,Region,LGA,Latitude,Longiude,Facility Name,Facility type,Facility Ownership,Implementing Partner,Funder
-Nigeria,Kano,Northwest,Nasarawa,,,"Kano State One Stop Shop (OSS), Nasarawa",Secondary,State,AHNI,Global Fund
-Nigeria,Abuja,Northcentral,AMAC,,,FMC Gwarimpa,Secondary,Federal,IHVN,CDC
-Nigeria,Oyo,Southwest,Idadan North,,,Oluyoro Hospital,Seconday,Faith,CCFN,DOD
-Nigeria,Lagos,Southwest,Lagos Island,,,Island Maternity Hospital,Primary,State,FHI 360,USAID
-Nigeria,Imo,Southeast,Owerri West,,,FMC Owerri,Tetiary,Federal,CRS,USAID
-Nigeria,Abuja,Northcentral,Gwagwalada,,,Gwagwalada Hospital,Tetiary,Federal,IHVN,CDC
-Nigeria,Abuja,Northcentral,AMAC,,,National Hospital Abuja,Tetiary,Federal,MSH,CDC
+﻿Datim ID,State,Region,LGA,Latitude,Longiude,Facility Name,Facility type,Facility Ownership,Implementing Partner,Funder
+diPCa9GUMaJ,Lagos,South West,Ikorodu,,,General Hospital Ikorodu,Secondary,State,HALG_ACE6,USAID
+WlXQVJSBvrn,Lagos,South West,Mushin,,,Lagos University Teaching Hospital (LUTH),Secondary,Federal,CIHP,CDC
+bsw3naXOOX1,Benue,North Central,Logo,,,Igboughol Local Government Health Clinic,Seconday,Faith,APIN,CDC
+04/17/1/2/1/0001,Anambra,South East,Onitsha South,,,Onitsha General Hospital,Primary,State,FHI360_GF,GF
+q1D4GdFPtqJ,Taraba,North East,Wukari,,,CRCN Hospital Wukari,Tetiary,Federal,JHPIEGO,USAID
+qadjYTdccOC,Niger,North Central,Chanchaga,,,General Hospital - Minna,Tetiary,Federal,CCCRN,USAID
+Ho8HeGPzmwk,Lagos,South West,Amuwo-Odofin,,,Amuwo Odofin KP One Stop Shop,Tetiary,Federal,CIHP,CDC
+GbtTSJLBKbI,Adamawa,North East,Yola North,,,St. Francis Hospital,,,ACE1,USAID
+PLrNBrw12w4,Niger,North Central,Borgu,,,General Hospital - New Bussa,,,CCCRN,USAID
+VqKuYd50P6Z,Benue,North Central,Logo,,,Nongu u Kristu ke Sudan hen Tiv (NKST) Hospital - Anyiin,,,APIN,CDC
+HfmNgrzgWEZ,Akwa Ibom,South South,Uruan,,,Ituk Mbang Methodist General Hospital,,,ECEWS,USAID
+hJnEYRxvSz2,Lagos,South West,Ojo,,,Ojo KP One Stop Shop- Virtual,,,HAN,USAID
+JgABdnCf8Qn,Akwa Ibom,South South,Essien Udim,,,Ukana Cottage Hospital,,,JHPIEGO,USAID
+cNbVnYusOlF,Oyo,South West,Saki West,,,oy State Hospital- Saki,,,APIN,CDC
+EH08kwk1foy,Benue,North Central,Makurdi,,,Makurdi KP One Stop Shop,,,APIN,CDC
+cmkm8UQpvWk,Taraba,North East,Jalingo,,,One Stop Shop- Jalingo,,,FHI360_GF,GF
+sOlMR20VFFC,Enugu,South East,Nkanu West,,,University Of Nigeria Teaching Hospital (UNTH),,,CCFN,CDC
+r0EtZzrlrYb,Niger,North Central,Bida,,,General Hospital -Bida,,,CCCRN,USAID
+a5TU20BYdFY,Rivers,South South,Ahoada East,,,Ahoada General Hospital,,,IHVN,CDC
+Qohvpui82h3,Akwa Ibom,South South,Ika,,,Urua Inyang Primary Health Centre,,,JHPIEGO,USAID
+tZy8wIM53xT,Kano,North West,Ungogo,,,Waziri Shehu Gidado General Hospital,,,GGHN,USAID
+UlX4JORbkIa,Rivers,South South,Oyigbo,,,Oyigbo Comprehensive Health Centre,,,IHVN,CDC
+rB78LYw7nv2,Akwa Ibom,South South,Ikot Ekpene,,,Ikot Ekpene Primary Health Centre,,,JHPIEGO,USAID
+K66w8LC7LCL,Akwa Ibom,South South,Mbo,,,Enwang Primary Health Centre,,,ECEWS,USAID
+XFDJkiGqk2X,Rivers,South South,Ikwerre,,,Isiokpo General Hospital,,,IHVN,CDC
+GW1w1chZMPR,FCT,North Central,Gwagwalada,,,University Of Abuja Teaching Hospital - Gwagwalda,,,IHVN,CDC
+TOL2FI5yOWq,Benue,North Central,Logo,,,Mchia Local Government Health Center,,,APIN,CDC
+yoQfnOykofU,Lagos,South West,Agege,,,Agege KP One Stop Shop,,,HAN,USAID
+BPvnX1MlAAl,Lagos,South West,Eti Osa,,,Eti-Osa KP One Stop Shop,,,CIHP,CDC
+blh4REHlv0u,Lagos,South West,Lagos Island,,,Lagos Island One Stop Shop- Virtual,,,HAN,USAID
+rU0owasuzGp,Benue,North Central,Ukum,,,Afia Comprehensive Health Center,,,APIN,CDC
+nTOggT8y4RW,Rivers,South South,Gokana,,,Terrebor General Hospital,,,IHVN,CDC
+EA0gMmZjNn6,Benue,North Central,Makurdi,,,Federal Medical Center - Makurdi,,,APIN,CDC
+MI3hLVjIws5,Kano,North West,Kano Municipal,,,Murtala Mohammed Specialist Hospital,,,GGHN,USAID
+x9AGFcyHbas,Benue,North Central,Katsina-Ala,,,Nongu u Kristu ke Sudan hen Tiv (NKST) Hospital - Sai,,,APIN,CDC
+oY149KIEnUH,Benue,North Central,Gboko,,,Gboko KP One Stop Shop,,,APIN,CDC
+OWOckBlm9Du,Lagos,South West,ifako-ijaiye,,,Ifako Ijaiye General Hospital,,,CIHP,CDC
+TeUPDYF4sGG,Akwa Ibom,South South,Uyo,,,Uyo Heartland Alliance Community Centre,,,HAN,USAID
+04/12/1/1/2/0016,Anambra,South East,Ihiala,,,Our Lady of Lourdes Hospital,,,FHI360_GF,GF
+AKu9vYBZN3w,Lagos,South West,Ikorodu,,,Ikorodu KP OSS,,,HAN,USAID
+h678jCLqkMn,Enugu,South East,Udi,,,Udi District Hospital,,,CCFN,CDC
+hlKqAEwWVbh,Rivers,South South,Okrika,,,Okrika General Hospital,,,IHVN,CDC
+qEW4Bhjh7Lv,Lagos,South West,Mushin,,,Mushin KP One Stop Shop,,,CIHP,CDC
+QsChxCxPcqL,Rivers,South South,Khana,,,Bori General Hospital,,,IHVN,CDC
+Znb4nTT8QvI,Niger,North Central,Kontagora,,,General Hospital Kontagora,,,CCCRN,USAID
+TBmwZ9LSHfO,Niger,North Central,Shiroro,,,RURAL HOSP,,,CCCRN,USAID
+04/17/1/2/2/0017,Anambra,South East,Onitsha North,,,St Charles Borromeo Hospital,,,FHI360_GF,GF
+fjiKMWnNBwn,Oyo,South West,Ogbomosho South,,,Ogbomosho State Hospital,,,APIN,CDC
+AHF-04-565-OKP,Anambra,South East,Ogbaru,,,PHC Okpoko,,,AHF,AHF
+RxLmSTf6Kpl,Adamawa,North East,Yola South,,,Yola Federal Medical Centre,,,ACE1,USAID
+CHqAwjTU2Jc,Lagos,South West,Oshodi-Isolo,,,General Hospital Isolo,,,CIHP,CDC
+YE1lCEtYmen,Lagos,South West,Ojo,,,Ojo Primary Health Centre,,,HALG_ACE6,USAID
+x6uBaUpHFXY,Oyo,South West,Saki West,,,Baptist Medical Center - Saki,,,APIN,CDC
+iFnNa3eXIu7,Niger,North Central,Tafa,,,Umaru YarAdua Memorial Hospital - Sabonwuse,,,CCCRN,USAID
+sxh43Q2fp9k,Niger,North Central,Bida,,,Federal Medical Centre - Bida,,,CCCRN,USAID
+AFtz58N0L6c,Sokoto,North West,Sokoto South,,,Sokoto Specialist Hospital - Sokoto,,,ACE3,USAID
+FTowClyX4hi,Rivers,South South,Okrika,,,Ayungu Biri Model Primary Health Centre,,,IHVN,CDC
+uTSKSwmTe3i,Rivers,South South,Degema,,,Degema General Hospital,,,IHVN,CDC
+I7OeRABW6UN,Enugu,South East,Enugu South,,,Enugu Eastern Medical Hospital,,,CCFN,CDC
+QyGta1aWcQl,Sokoto,North West,Wamako,,,Usmanu Danfodiyyo University Teaching Hospital (UDUTH) - Sokoto,,,ACE3,USAID
+t19/66/1/2/1/7787,Kano,North West,Nasarawa,,,Kano State One Stop Shop (OSS) -  Nasarawa,,,FHI360_GF,GF
+rdDoegrEtum,FCT,North Central,AMAC,,,Idu Karimo Primary Health Center,,,IHVN,CDC
+04/08/1/3/1/0001,Anambra,South East,Nnewi North,,,Nnamdi Azikiwe University Teaching Hospital,,,FHI360_GF,GF
+B0V6x5le9Tj,Taraba,North East,Wukari,,,General hospital Wukari,,,JHPIEGO,USAID
+04/01/1/3/1/0053,Anambra,South East,Awka South,,,Chuwuemeka Odumegwu Ojukwu University Teaching Hospital,,,FHI360_GF,GF
+KFbRZKvXpb3,Rivers,South South,Obio/Akpor,,,KPIF Obio-Akpor KP OSS,,,IHVN,CDC
+AbypQzl7VfW,Enugu,South East,Nsukka,,,Faith Foundation Mission Hospital - Nsukka,,,CCFN,CDC
+AHF-07-259-UNZ,Benue,North Central,Guma,,,CHC Unzughul,,,AHF,AHF
+mvMjGraGxvu,Benue,North Central,Kwande,,,Adikpo General Hospital,,,APIN,CDC
+qoM5d6LxtRm,Rivers,South South,Ogba/Egbema/Ndoni,,,Omoku Model Primary Health Centre,,,IHVN,CDC
+wLVsKQeLovq,Sokoto,North West,Illela,,,so Illela General Hospital,,,ACE3,USAID
+QdL8RSYxeLg,Oyo,South West,Ibadan North,,,University College Hospital,,,APIN,CDC
+NcHykmnJlCo,Niger,North Central,Gurara,,,Family Medicine Practice Centre - Gawubabangida,,,CCCRN,USAID
+AgRjHcsC4wf,Benue,North Central,Makurdi,,,Benue State University Teaching Hospital,,,APIN,CDC
+JVUE6hcwdYf,Benue,North Central,Buruku,,,Mbagen Community Hospital - Abwa,,,APIN,CDC
+x9IejBPCQVb,FCT,North Central,AMAC,,,Kubwa General Hospital,,,IHVN,CDC
+Ke1y8vsmeC4,Rivers,South South,Obio/Akpor,,,University of Portharcourt Teaching Hospital,,,IHVN,CDC
+E1PW0PYkvDx,Adamawa,North East,Yola North,,,Yola KP One Stop Shop,,,SFH,USAID
+v5amiydkXFR,Kano,North West,Tarauni,,,Al-Noury Specialist Hospital,,,GGHN,USAID
+jyHRtpRCr7M,Oyo,South West,ibadan south-east,,,"St. Mary""s Catholic Hospital - Eleta",,,APIN,CDC
+x0a9eO6b8TN,Delta,South South,Ndokwa West,,,Brema Hospital - Kwale,,,ECEWS_SPEED,CDC
+W387n0fbylW,Adamawa,North East,Yola South,,,Adamawa Hospital -  Yola,,,ACE1,USAID
+a3HwE6yZKfa,Enugu,South East,Enugu North,,,Mother of Christ Specialist Hospital,,,CCFN,CDC
+FjX5IC6wJ1m,FCT,North Central,AMAC,,,Gwarinpa One Stop Shop,,,IHVN,CDC
+qDxr0sPGxet,Enugu,South East,Enugu East,,,Annunciation Specialist Hospital- Emene,,,CCFN,CDC
+jbjCB91Bild,Rivers,South South,Khana,,,Bori Inadum Medical Centre,,,IHVN,CDC
+AHF-07-259-ASH,Benue,North Central,Guma,,,CHC Agasha,,,AHF,AHF
+HwtnV8T9Ez0,Niger,North Central,Wushishi,,,CHC ZUNGERU,,,CCCRN,USAID
+o7hgxd8M2UG,Kano,North West,Fagge,,,Kano Infectious Diseases Hospital,,,GGHN,USAID
+wZTPrbae9ie,Niger,North Central,Chanchaga,,,Minna One Stop Shop,,,HAN,USAID
+wp753KYAdno,FCT,North Central,AMAC,,,Asokoro District Hospital,,,IHVN,CDC
+04/11/1/1/1/0035,Anambra,South East,Idemili South,,,Oba Comprehensive Health Centre (Trauma Centre),,,FHI360_GF,GF
+MviB6BlDITF,Niger,North Central,Suleja,,,General Hospital - Suleja,,,CCCRN,USAID
+04/04/1/1/2/0001,Anambra,South East,Anaocha,,,Adazi St Joseph Hospital,,,FHI360_GF,GF
+A69wkzO3hTM,Delta,South South,Warri North,,,Koko General Hospital,,,ECEWS_SPEED,CDC
+KNwYLS8wBMQ,Benue,North Central,Ushongo,,,Nongu u Kristu ke Sudan hen Tiv (NKST) Health Center - Gbe,,,APIN,CDC
+t12/66/1/2/1/7783,Enugu,South East,Enugu North,,,en Enugu State One Stop Shop (OSS) -  Enugu,,,FHI360_GF,GF
+XxYNIkLVpEa,Lagos,South West,Agege,,,Orile Agege General Hospital,,,HALG_ACE6,USAID
+SHF865XzjPJ,FCT,North Central,AMAC,,,Nyanya One Stop Shop,,,IHVN,CDC
+o9zWHFjhquv,Oyo,South West,Iseyin,,,Iseyin General Hospital,,,APIN,CDC
+LQY80730nX8,Benue,North Central,Gboko,,,Nongu u Kristu ke Sudan hen Tiv (NKST) Hospital - Mkar,,,APIN,CDC
+C0810vNbF7i,Akwa Ibom,South South,Ikot Abasi,,,Base Ikot Abasi Primary Health Centre,,,ECEWS,USAID
+zyxDXEYBxqA,Lagos,South West,Lagos Island,,,Lagos General Hospital,,,HALG_ACE6,USAID
+F5MHLc59Vjo,Rivers,South South,Ogba/Egbema/Ndoni,,,Erema General Hospital,,,IHVN,CDC
+iJ6bV49PCve,FCT,North Central,Bwari,,,Daughters of Charity (DOC) Hospital - Kubwa,,,IHVN,CDC
+kzjkCk8UnGR,Lagos,South West,Lagos Mainland,,,Lagos State Mainland Hospital,,,HALG_ACE6,USAID
+ZbHGHJ6t2fG,Akwa Ibom,South South,Nsit-Ubium,,,Nsit Ubium Primary Health Centre,,,ECEWS,USAID
+JWd57huq2Y8,Enugu,South East,Oji River,,,Achi Joint Hospital,,,CCFN,CDC
+XwODacI3oni,Rivers,South South,Etche,,,Okomoko General Hospital,,,IHVN,CDC
+UzCw35LZV95,Lagos,South West,Badagry,,,Badagry General Hospital,,,HALG_ACE6,USAID
+NAM9pHOsNfq,Akwa Ibom,South South,Itu,,,Mbiabong Itam Health Center,,,JHPIEGO,USAID
+AHF-07-259-DAU,Benue,North Central,Guma,,,FSP Daudu,,,AHF,AHF
+Bp386GWe6cG,Rivers,South South,Ikwerre,,,Aluu Model Primary Health Centre,,,IHVN,CDC
+FH7LMnbnVlT,Rivers,South South,port harcourt,,,Rivers State University Teaching Hospital,,,IHVN,CDC
+EnyrCHOxsJ3,Lagos,South West,Agege,,,Sango Primary Health Centre,,,HALG_ACE6,USAID
+pNzfxjpSiDy,Rivers,South South,Bonny,,,Bonny KP One Stop Shop,,,IHVN,CDC
+AhMWg4BfCR3,Niger,North Central,Lapai,,,General Hospital - Lapai,,,CCCRN,USAID
+In3kBMCkxaK,Oyo,South West,Ibadan North,,,oy OLA Catholic Hospital- Oluyoro- Ibadan,,,APIN,CDC
+qk2SW3ifeyo,Benue,North Central,Ukum,,,Sankera General Hospital,,,APIN,CDC
+blh4REHlv0u,Lagos,South West,Lagos Island,,,Lagos Island One Stop Shop- Virtual,,,HAN,USAID
+AHF-15-446-KUJ,FCT,North Central,Kuje,,,GH Kuje,,,AHF,AHF
+Oj5Vfz8YO0F,Akwa Ibom,South South,Okobo,,,Okopedi Primary Health Centre,,,ECEWS,USAID
+y9g73y2KvTz,Sokoto,North West,Tambuwal,,,General Hospital  Dogon Daji,,,ACE3,USAID
+C5Y2GUHt4sf,Enugu,South East,Awgu,,,Awgu District Hospital,,,CCFN,CDC
+s0SI9pIe68w,Rivers,South South,port harcourt,,,Health of the Sick,,,IHVN,CDC
+SEyGljwDspr,Lagos,South West,Ajeromi-Ifelodun,,,Ajeromi General Hospital,,,HALG_ACE6,USAID
+tCLZNcfcMy3,Benue,North Central,Tarka,,,Wannune General Hospital,,,APIN,CDC
+E5jz9JxYBuv,Kano,North West,Tarauni,,,Aminu Kano Teaching Hospital - Kano,,,GGHN,USAID
+W253OQ4f8sy,Niger,North Central,Mokwa,,,G. HOSP MOKWA,,,CCCRN,USAID
+aGpasZzMXCH,Niger,North Central,Paikoro,,,IbrahBabangida Specialist Hospital - Minna,,,CCCRN,USAID
+hk0BNOtE2JW,Delta,South South,Sapele,,,de Sapele Central Hospital,,,ECEWS_SPEED,CDC
+WVFumwCOfkQ,Kano,North West,Nasarawa,,,kn Sir Muhammad Sanusi Specialist Hospital,,,GGHN,USAID
+MamvPxaqiTG,Oyo,South West,Ibadan North,,,Adeoyo Maternity Hospital,,,APIN,CDC
+I1Aikl4XYdx,Enugu,South East,Igbo Eze North,,,Chima Hospital And Maternity,,,CCFN,CDC
+mcYWXMmN2Vm,Delta,South South,Ughelli North,,,KPIF_Ughelli North OSS,,,ECEWS_SPEED,CDC
+R3rzxyzlNgM,Sokoto,North West,Sokoto North,,,Sokoto KP One Stop Shop,,,SFH,USAID
+M0b885TVP1Q,Taraba,North East,Zing,,,Zing General Hospital,,,JHPIEGO,USAID
+jMnxdoXrX0B,Lagos,South West,Alimosho,,,Alimosho General Hospital,,,CIHP,CDC
+appJzgMDcmf,Oyo,South West,Oyo East,,,oy State Hospital- Oyo,,,APIN,CDC
+yxClkk4SCzL,Niger,North Central,Rafi,,,General Hospital - Kagara,,,CCCRN,USAID
+IftOhYkOxD2,Niger,North Central,Lavun,,,GENERAL HOSP KUTIGI KUTIGI,,,CCCRN,USAID
+AHF-07-129-AWU,Benue,North Central,Buruku,,,PHC Awuapila,,,AHF,AHF
+SkBX3Toxsby,Akwa Ibom,South South,Oruk Anam,,,Ikot Okoro General Hospital,,,ECEWS,USAID
+AHF-07-491-AGA,Benue,North Central,Makurdi,,,FSP Agan,,,AHF,AHF
+mQP9uTmEuSi,Enugu,South East,Igbo Eze North,,,Enugu-Ezike District Hospital,,,CCFN,CDC
+Cwp4udMiIjP,Enugu,South East,Nsukka,,,Nsukka District Hospital,,,CCFN,CDC
+D22YzjCtgyM,Niger,North Central,Rijau,,,GENERAL HOSPITAL  T MAGAJIYA,,,CCCRN,USAID
+J8nZRFuguyN,Delta,South South,Warri South,,,KPIF_Warri South OSS,,,ECEWS_SPEED,CDC
+y5TzOvctmba,Lagos,South West,Ikeja,,,Lagos State University Teaching Hospital,,,CIHP,CDC
+rSvimK96wuu,Rivers,South South,Etche,,,Umuebule Cottage Hospital,,,IHVN,CDC
